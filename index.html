@@ -1,393 +1,893 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCC Battalion Attendance Register</title>
-  <!-- Tailwind CSS CDN -->
+
+  <!-- Tailwind CSS: styling loads from the internet -->
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    /* Freeze # and Student Name columns while scrolling dates horizontally */
     .sticky-col-1 {
       position: sticky;
       left: 0;
       z-index: 10;
-      background-color: #ffffff;
+      background-color: #fff;
     }
+
     .sticky-col-2 {
       position: sticky;
       left: 48px;
       z-index: 10;
-      background-color: #ffffff;
+      background-color: #fff;
     }
+
     .sticky-header-1 {
       position: sticky;
       left: 0;
       z-index: 20;
       background-color: #f8fafc;
     }
+
     .sticky-header-2 {
       position: sticky;
       left: 48px;
       z-index: 20;
       background-color: #f8fafc;
     }
+
+    button:focus-visible,
+    select:focus-visible,
+    input:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
   </style>
 </head>
+
 <body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
 
-  <div class="max-w-7xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
-          <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
-          <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
-          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Battalion Attendance Register</h1>
-        </div>
-        <p class="text-sm text-slate-500 mt-1">Tabbed Register • Switch between Parades, Events & Officials</p>
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <!-- Header -->
+  <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6
+    flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+    <div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
+        <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
+        <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
+        <h1 class="text-2xl font-bold text-slate-900 ml-2">
+          NCC Battalion Attendance Register
+        </h1>
       </div>
 
-      <div class="flex flex-wrap gap-2">
-        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-          + Add Cadet Name
-        </button>
-        <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" id="btn-add-date">
-          + Add Date
-        </button>
-        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-          📥 Export CSV
-        </button>
-      </div>
-    </header>
-
-    <!-- Stats Bar -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Cadets</p>
-        <p id="stat-cadets" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Parade Dates</p>
-        <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Dates</p>
-        <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Official Dates</p>
-        <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
-      </div>
+      <p class="text-sm text-slate-500 mt-1">
+        Tabbed Register • Parades, Events & Officials
+      </p>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4">
-      <button onclick="switchTab('parades')" id="tab-parades" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600">
-        🛡️ Parades
+    <div class="flex flex-wrap gap-2">
+      <button onclick="addStudent()"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        + Add Cadet Name
       </button>
-      <button onclick="switchTab('events')" id="tab-events" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800">
-        🎖️ Events
+
+      <button onclick="addDate()" id="btn-add-date"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        + Add Parade Date
       </button>
-      <button onclick="switchTab('officials')" id="tab-officials" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800">
-        📋 Officials
+
+      <button onclick="exportToCSV()"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Export CSV
       </button>
+
+      <button onclick="backupData()"
+        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Backup Data
+      </button>
+
+      <button onclick="document.getElementById('restore-file').click()"
+        class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        Restore Data
+      </button>
+
+      <input id="restore-file" type="file" accept=".json,application/json"
+        class="hidden" onchange="restoreData(event)">
+    </div>
+  </header>
+
+  <!-- Statistics -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Total Cadets
+      </p>
+      <p id="stat-cadets" class="text-2xl font-bold mt-1">0</p>
     </div>
 
-    <!-- Filter Bar (Month Selector) -->
-    <div class="bg-white rounded-none shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Dates by Month:</label>
-        <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
-          <option value="all">Show All Dates</option>
-        </select>
-      </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all dates.</p>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Parade Dates
+      </p>
+      <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
     </div>
 
-    <!-- Active Table View Container -->
-    <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h2 id="section-title" class="text-lg font-bold text-slate-900">Parade Attendance Register</h2>
-        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Viewing Parades</span>
-      </div>
-      
-      <div class="overflow-x-auto max-w-full">
-        <table class="w-full text-left border-collapse min-w-max">
-          <thead>
-            <tr id="table-header-row" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
-              <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
-              <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-              <!-- Dynamic dates injected here -->
-              <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28" id="header-pct-label">Parade %</th>
-              <th class="p-3 text-center w-20">Action</th>
-            </tr>
-          </thead>
-          <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-            <!-- Student rows injected here -->
-          </tbody>
-        </table>
-      </div>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Event Dates
+      </p>
+      <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
     </div>
 
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+        Official Dates
+      </p>
+      <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
+    </div>
   </div>
 
-  <script>
-    let currentTab = 'parades'; // default active tab
+  <!-- Category Tabs -->
+  <div class="flex flex-wrap border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-2">
 
-    let students = JSON.parse(localStorage.getItem('ncc_students')) || [
-      { id: '1', name: 'Ansh' },
-      { id: '2', name: 'Pawan' },
-      { id: '3', name: 'Pranav' }
-    ];
+    <button onclick="switchTab('parades')" id="tab-parades"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600">
+      Parades
+    </button>
 
-    let dates = JSON.parse(localStorage.getItem('ncc_dates')) || {
-      parades: ['2026-05-19', '2026-05-26'],
-      events: ['2026-06-01'],
-      officials: ['2026-06-10']
-    };
+    <button onclick="switchTab('events')" id="tab-events"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent">
+      Events
+    </button>
 
-    let attendance = JSON.parse(localStorage.getItem('ncc_attendance')) || {
-      parades: { '1_2026-05-19': 'P', '2_2026-05-19': 'P' },
-      events: { '1_2026-06-01': 'P' },
-      officials: { '1_2026-06-10': 'P' }
-    };
+    <button onclick="switchTab('officials')" id="tab-officials"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent">
+      Officials
+    </button>
+  </div>
 
-    function saveData() {
-      localStorage.setItem('ncc_students', JSON.stringify(students));
-      localStorage.setItem('ncc_dates', JSON.stringify(dates));
-      localStorage.setItem('ncc_attendance', JSON.stringify(attendance));
-      render();
+  <!-- Month Filter -->
+  <div class="bg-white shadow-sm border-x border-slate-200 px-6 py-3
+    flex flex-col md:flex-row items-center justify-between gap-4">
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <label for="date-filter" class="text-sm font-medium text-slate-600">
+        Filter Dates by Month:
+      </label>
+
+      <select id="date-filter" onchange="render()"
+        class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold">
+        <option value="all">Show All Dates</option>
+      </select>
+    </div>
+
+    <p id="filter-status" class="text-sm text-slate-500">
+      Showing all dates.
+    </p>
+  </div>
+
+  <!-- Attendance Table -->
+  <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
+
+    <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-3 gap-2">
+      <h2 id="section-title" class="text-lg font-bold text-slate-900">
+        Parade Attendance Register
+      </h2>
+
+      <span id="section-badge"
+        class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+        Viewing Parades
+      </span>
+    </div>
+
+    <p class="text-xs text-slate-500">
+      Click a cell to change attendance: - → P (Present) → A (Absent) → -.
+      When adding a date, you can assign its weightage.
+    </p>
+
+    <div class="overflow-x-auto max-w-full">
+      <table class="w-full text-left border-collapse min-w-max">
+        <thead>
+          <tr id="table-header-row"
+            class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
+          </tr>
+        </thead>
+
+        <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
+        </tbody>
+      </table>
+    </div>
+
+    <p class="text-xs text-slate-500">
+      Attendance percentage uses the weightage of dates marked Present or Absent.
+      Unmarked dates are not included in the calculation.
+    </p>
+  </div>
+
+  <p class="text-center text-xs text-slate-500">
+    Data is saved in this browser on this computer. Back up your data regularly.
+  </p>
+
+</div>
+
+<script>
+"use strict";
+
+const CATEGORIES = ["parades", "events", "officials"];
+
+const TITLES = {
+  parades: "Parade Attendance Register",
+  events: "Event Attendance Register",
+  officials: "Official Duties Attendance Register"
+};
+
+const BADGES = {
+  parades: "Viewing Parades",
+  events: "Viewing Events",
+  officials: "Viewing Officials"
+};
+
+const DATE_BUTTONS = {
+  parades: "+ Add Parade Date",
+  events: "+ Add Event Date",
+  officials: "+ Add Official Date"
+};
+
+const PERCENTAGE_LABELS = {
+  parades: "Parade %",
+  events: "Event %",
+  officials: "Official %"
+};
+
+let currentTab = "parades";
+
+function readJSON(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : JSON.parse(value);
+  } catch (error) {
+    console.error("Could not read saved data:", key, error);
+    return fallback;
+  }
+}
+
+function makeDefaultDates() {
+  return {
+    parades: ["2026-05-19", "2026-05-26"],
+    events: ["2026-06-01"],
+    officials: ["2026-06-10"]
+  };
+}
+
+function makeDefaultAttendance() {
+  return {
+    parades: {
+      "1_2026-05-19": "P",
+      "2_2026-05-19": "P"
+    },
+    events: {
+      "1_2026-06-01": "P"
+    },
+    officials: {
+      "1_2026-06-10": "P"
     }
+  };
+}
 
-    function switchTab(tab) {
-      currentTab = tab;
-      
-      // Update tab styles
-      ['parades', 'events', 'officials'].forEach(t => {
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600";
-        } else {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800";
+function normalizeDates(value) {
+  const result = {};
+  CATEGORIES.forEach(category => {
+    result[category] = Array.isArray(value?.[category])
+      ? [...new Set(value[category].filter(isValidDate))].sort()
+      : [];
+  });
+  return result;
+}
+
+function normalizeAttendance(value) {
+  const result = {};
+  CATEGORIES.forEach(category => {
+    result[category] = {};
+    const records = value?.[category];
+
+    if (records && typeof records === "object" && !Array.isArray(records)) {
+      Object.entries(records).forEach(([key, status]) => {
+        if (status === "P" || status === "A") {
+          result[category][key] = status;
         }
       });
-
-      render();
     }
+  });
+  return result;
+}
 
-    function addStudent() {
-      const name = prompt("Enter Cadet Name:");
-      if (name && name.trim()) {
-        students.push({ id: Date.now().toString(), name: name.trim() });
-        saveData();
+function normalizeWeights(value, dateData) {
+  const result = {};
+  CATEGORIES.forEach(category => {
+    result[category] = {};
+    dateData[category].forEach(date => {
+      const weight = Number(value?.[category]?.[date]);
+      result[category][date] = Number.isFinite(weight) && weight > 0
+        ? weight
+        : 1;
+    });
+  });
+  return result;
+}
+
+let students = readJSON("ncc_students", [
+  { id: "1", name: "Ansh" },
+  { id: "2", name: "Pawan" },
+  { id: "3", name: "Pranav" }
+]);
+
+if (!Array.isArray(students)) students = [];
+
+students = students
+  .filter(s => s && s.id !== undefined && typeof s.name === "string")
+  .map(s => ({ id: String(s.id), name: s.name }));
+
+let dates = normalizeDates(readJSON("ncc_dates", makeDefaultDates()));
+let attendance = normalizeAttendance(
+  readJSON("ncc_attendance", makeDefaultAttendance())
+);
+let weights = normalizeWeights(readJSON("ncc_weights", {}), dates);
+
+// Ensure every category has the required data structures.
+CATEGORIES.forEach(category => {
+  if (!attendance[category]) attendance[category] = {};
+  if (!weights[category]) weights[category] = {};
+});
+
+function isValidDate(value) {
+  if (typeof value !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(value + "T00:00:00");
+  return !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value;
+}
+
+function saveData() {
+  try {
+    localStorage.setItem("ncc_students", JSON.stringify(students));
+    localStorage.setItem("ncc_dates", JSON.stringify(dates));
+    localStorage.setItem("ncc_attendance", JSON.stringify(attendance));
+    localStorage.setItem("ncc_weights", JSON.stringify(weights));
+    render();
+  } catch (error) {
+    alert("Could not save data. Your browser storage may be full or unavailable. Please make a backup.");
+    console.error(error);
+  }
+}
+
+function switchTab(tab) {
+  if (!CATEGORIES.includes(tab)) return;
+  currentTab = tab;
+
+  CATEGORIES.forEach(category => {
+    const button = document.getElementById("tab-" + category);
+    const active = category === tab;
+
+    button.className = active
+      ? "pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600"
+      : "pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent hover:text-slate-800";
+  });
+
+  render();
+}
+
+function addStudent() {
+  const name = prompt("Enter Cadet Name:");
+  if (name === null || !name.trim()) return;
+
+  students.push({
+    id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+    name: name.trim()
+  });
+
+  saveData();
+}
+
+function deleteStudent(id) {
+  const student = students.find(s => s.id === id);
+  if (!student) return;
+
+  if (!confirm("Delete " + student.name + " and all their attendance records?")) {
+    return;
+  }
+
+  students = students.filter(s => s.id !== id);
+
+  CATEGORIES.forEach(category => {
+    Object.keys(attendance[category]).forEach(key => {
+      if (key.startsWith(id + "_")) {
+        delete attendance[category][key];
       }
-    }
+    });
+  });
 
-    function deleteStudent(id) {
-      if (confirm("Are you sure you want to delete this cadet?")) {
-        students = students.filter(s => s.id !== id);
-        saveData();
+  saveData();
+}
+
+function addDate() {
+  const today = new Date();
+  const localToday = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0")
+  ].join("-");
+
+  const date = prompt(
+    "Enter " + currentTab.slice(0, -1) + " date (YYYY-MM-DD):",
+    localToday
+  );
+
+  if (date === null) return;
+
+  if (!isValidDate(date)) {
+    alert("Please enter a valid date in YYYY-MM-DD format.");
+    return;
+  }
+
+  if (dates[currentTab].includes(date)) {
+    alert("This date already exists in this category.");
+    return;
+  }
+
+  const weightText = prompt(
+    "Enter the weightage for this date (a positive number).\nExample: 1 for a normal parade, 2 for a double-weight activity.",
+    "1"
+  );
+
+  if (weightText === null) return;
+
+  const weight = Number(weightText);
+  if (!Number.isFinite(weight) || weight <= 0) {
+    alert("Weightage must be a positive number, such as 1 or 2.");
+    return;
+  }
+
+  dates[currentTab].push(date);
+  dates[currentTab].sort();
+  weights[currentTab][date] = weight;
+
+  saveData();
+}
+
+function deleteDate(dateToDelete) {
+  if (!confirm("Delete the date " + dateToDelete +
+      " and all attendance records for this date in this category?")) {
+    return;
+  }
+
+  dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
+  delete weights[currentTab][dateToDelete];
+
+  Object.keys(attendance[currentTab]).forEach(key => {
+    if (key.endsWith("_" + dateToDelete)) {
+      delete attendance[currentTab][key];
+    }
+  });
+
+  saveData();
+}
+
+function editWeight(date) {
+  const currentWeight = weights[currentTab][date] || 1;
+  const value = prompt("Enter new weightage for " + date + ":", String(currentWeight));
+
+  if (value === null) return;
+
+  const weight = Number(value);
+  if (!Number.isFinite(weight) || weight <= 0) {
+    alert("Weightage must be a positive number.");
+    return;
+  }
+
+  weights[currentTab][date] = weight;
+  saveData();
+}
+
+function toggleAttendance(studentId, date) {
+  const key = studentId + "_" + date;
+  const current = attendance[currentTab][key];
+
+  if (!current) {
+    attendance[currentTab][key] = "P";
+  } else if (current === "P") {
+    attendance[currentTab][key] = "A";
+  } else {
+    delete attendance[currentTab][key];
+  }
+
+  saveData();
+}
+
+function calculatePercentage(category, studentId) {
+  let presentWeight = 0;
+  let markedWeight = 0;
+
+  dates[category].forEach(date => {
+    const status = attendance[category][studentId + "_" + date];
+
+    if (status !== "P" && status !== "A") return;
+
+    const weight = Number(weights[category][date]) || 1;
+    markedWeight += weight;
+
+    if (status === "P") {
+      presentWeight += weight;
+    }
+  });
+
+  if (markedWeight === 0) return null;
+
+  return Math.round((presentWeight / markedWeight) * 100);
+}
+
+function csvEscape(value) {
+  let text = String(value ?? "");
+
+  // Prevent spreadsheet formula execution for text values.
+  if (/^[=+\-@]/.test(text)) text = "'" + text;
+
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function exportToCSV() {
+  const rows = [[
+    "Category", "Sr No", "Cadet Name", "Date",
+    "Weightage", "Attendance Status", "Attendance Percentage"
+  ]];
+
+  CATEGORIES.forEach(category => {
+    students.forEach((student, index) => {
+      const percentage = calculatePercentage(category, student.id);
+      const percentageText = percentage === null ? "Not marked" : percentage + "%";
+
+      if (dates[category].length === 0) {
+        rows.push([
+          category.toUpperCase(),
+          index + 1,
+          student.name,
+          "",
+          "",
+          "No dates",
+          percentageText
+        ]);
       }
-    }
 
-    function addDate() {
-      const date = prompt(`Enter ${currentTab.slice(0, -1)} Date (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
-      if (date && !dates[currentTab].includes(date)) {
-        dates[currentTab].push(date);
-        dates[currentTab].sort();
-        saveData();
-      }
-    }
+      dates[category].forEach(date => {
+        const status = attendance[category][student.id + "_" + date] || "Not marked";
 
-    function deleteDate(dateToDelete) {
-      if (confirm(`Remove column for date ${dateToDelete}?`)) {
-        dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
-        saveData();
-      }
-    }
-
-    function toggleAttendance(studentId, date) {
-      if (!attendance[currentTab]) attendance[currentTab] = {};
-      const key = `${studentId}_${date}`;
-      const current = attendance[currentTab][key];
-
-      if (!current) {
-        attendance[currentTab][key] = 'P';
-      } else if (current === 'P') {
-        attendance[currentTab][key] = 'A';
-      } else {
-        delete attendance[currentTab][key];
-      }
-      saveData();
-    }
-
-    function calculatePercentage(category, studentId) {
-      const catDates = dates[category];
-      if (!catDates || catDates.length === 0) return 0;
-      let presentCount = 0;
-      let totalConducted = 0;
-
-      catDates.forEach(d => {
-        const val = attendance[category] ? attendance[category][`${studentId}_${d}`] : '';
-        if (val === 'P') presentCount++;
-        if (val === 'P' || val === 'A') totalConducted++;
+        rows.push([
+          category.toUpperCase(),
+          index + 1,
+          student.name,
+          date,
+          weights[category][date] || 1,
+          status,
+          percentageText
+        ]);
       });
+    });
+  });
 
-      if (totalConducted === 0) return 0;
-      return Math.round((presentCount / totalConducted) * 100);
-    }
+  const csv = "\uFEFF" + rows
+    .map(row => row.map(csvEscape).join(","))
+    .join("\r\n");
 
-    function exportToCSV() {
-      let csv = ["CATEGORY,SR NO,Student Name,Date,Status,Percentage"];
-      
-      ['parades', 'events', 'officials'].forEach(cat => {
-        const catDates = dates[cat];
-        students.forEach((student, index) => {
-          const pct = calculatePercentage(cat, student.id);
-          catDates.forEach(d => {
-            const status = (attendance[cat] && attendance[cat][`${student.id}_${d}`]) || '-';
-            csv.push(`${cat.toUpperCase()},${index + 1},"${student.name}",${d},${status},${pct}%`);
-          });
+  downloadFile(
+    csv,
+    "NCC_Register_" + localDateString() + ".csv",
+    "text/csv;charset=utf-8;"
+  );
+}
+
+function localDateString() {
+  const date = new Date();
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0")
+  ].join("-");
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type: type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function backupData() {
+  const backup = {
+    app: "NCC Battalion Attendance Register",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    students: students,
+    dates: dates,
+    attendance: attendance,
+    weights: weights
+  };
+
+  downloadFile(
+    JSON.stringify(backup, null, 2),
+    "NCC_Attendance_Backup_" + localDateString() + ".json",
+    "application/json"
+  );
+
+  alert("Backup downloaded. Keep this JSON file safe. You can restore it on another computer.");
+}
+
+function restoreData(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function() {
+    try {
+      const data = JSON.parse(reader.result);
+
+      if (!data || !Array.isArray(data.students) ||
+          !data.dates || !data.attendance) {
+        throw new Error("The selected file is not a valid NCC backup.");
+      }
+
+      if (!confirm("Restoring will replace the current register data on this computer. Continue?")) {
+        event.target.value = "";
+        return;
+      }
+
+      students = data.students
+        .filter(s => s && s.id !== undefined && typeof s.name === "string")
+        .map(s => ({ id: String(s.id), name: s.name }));
+
+      dates = normalizeDates(data.dates);
+      attendance = normalizeAttendance(data.attendance);
+      weights = normalizeWeights(data.weights || {}, dates);
+
+      CATEGORIES.forEach(category => {
+        dates[category].forEach(date => {
+          const weight = Number(data.weights?.[category]?.[date]);
+          weights[category][date] =
+            Number.isFinite(weight) && weight > 0 ? weight : 1;
         });
       });
 
-      let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-      let link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `NCC_Register_All_Categories_${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
+      saveData();
+      alert("Backup restored successfully.");
+    } catch (error) {
+      alert("Could not restore this file. Please select a valid NCC backup JSON file.");
+      console.error(error);
+    } finally {
+      event.target.value = "";
     }
+  };
 
-    function getAvailableMonths() {
-      const months = new Set();
-      dates[currentTab].forEach(d => {
-        months.add(d.substring(0, 7)); // YYYY-MM
-      });
-      return Array.from(months).sort();
+  reader.onerror = function() {
+    alert("Unable to read the selected file.");
+    event.target.value = "";
+  };
+
+  reader.readAsText(file);
+}
+
+function getAvailableMonths() {
+  return [...new Set(
+    dates[currentTab].map(date => date.substring(0, 7))
+  )].sort();
+}
+
+function formatMonthYear(value) {
+  const parts = value.split("-");
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+
+  return date.toLocaleString("en-IN", {
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function updateFilterDropdown() {
+  const dropdown = document.getElementById("date-filter");
+  const previousValue = dropdown.value;
+  const months = getAvailableMonths();
+
+  dropdown.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "all";
+  allOption.textContent = "Show All Dates";
+  dropdown.appendChild(allOption);
+
+  months.forEach(month => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.textContent = formatMonthYear(month);
+    dropdown.appendChild(option);
+  });
+
+  dropdown.value = months.includes(previousValue) || previousValue === "all"
+    ? previousValue
+    : "all";
+}
+
+function render() {
+  updateFilterDropdown();
+
+  const selectedFilter = document.getElementById("date-filter").value;
+  const categoryDates = dates[currentTab];
+
+  const filteredDates = selectedFilter === "all"
+    ? categoryDates
+    : categoryDates.filter(date => date.startsWith(selectedFilter));
+
+  document.getElementById("filter-status").textContent =
+    selectedFilter === "all"
+      ? "Showing all " + filteredDates.length + " dates."
+      : "Showing " + filteredDates.length + " of " +
+        categoryDates.length + " dates in " + formatMonthYear(selectedFilter) + ".";
+
+  document.getElementById("section-title").textContent = TITLES[currentTab];
+  document.getElementById("section-badge").textContent = BADGES[currentTab];
+  document.getElementById("btn-add-date").textContent = DATE_BUTTONS[currentTab];
+
+  const headerRow = document.getElementById("table-header-row");
+  const headerParts = [
+    '<th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>',
+    '<th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Cadet Name</th>'
+  ];
+
+  filteredDates.forEach(date => {
+    const th = document.createElement("th");
+    th.className = "p-3 border-r border-slate-200 min-w-[150px] text-center";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "flex flex-col items-center gap-1";
+
+    const dateLabel = document.createElement("span");
+    dateLabel.textContent = date;
+
+    const weightButton = document.createElement("button");
+    weightButton.className = "text-blue-600 hover:text-blue-800 text-xs";
+    weightButton.textContent = "Weight: " + (weights[currentTab][date] || 1);
+    weightButton.title = "Click to edit weightage";
+    weightButton.onclick = () => editWeight(date);
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "text-slate-400 hover:text-red-600 font-bold text-sm";
+    deleteButton.textContent = "Delete date";
+    deleteButton.onclick = () => deleteDate(date);
+
+    wrapper.append(dateLabel, weightButton, deleteButton);
+    th.appendChild(wrapper);
+    headerParts.push(th);
+  });
+
+  const percentageHeader = document.createElement("th");
+  percentageHeader.className = "p-3 border-l border-slate-200 bg-slate-100 text-center w-28";
+  percentageHeader.textContent = PERCENTAGE_LABELS[currentTab];
+  headerParts.push(percentageHeader);
+
+  const actionHeader = document.createElement("th");
+  actionHeader.className = "p-3 text-center w-20";
+  actionHeader.textContent = "Action";
+  headerParts.push(actionHeader);
+
+  headerRow.replaceChildren();
+
+  headerParts.forEach(part => {
+    if (typeof part === "string") {
+      const template = document.createElement("template");
+      template.innerHTML = part;
+      headerRow.appendChild(template.content);
+    } else {
+      headerRow.appendChild(part);
     }
+  });
 
-    function formatMonthYear(ymString) {
-      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      const parts = ymString.split('-');
-      return `${months[parseInt(parts[1]) - 1]} ${parts[0]}`;
-    }
+  const rowsContainer = document.getElementById("student-rows");
+  rowsContainer.innerHTML = "";
 
-    function updateFilterDropdown() {
-      const dropdown = document.getElementById('date-filter');
-      if (!dropdown) return;
+  students.forEach((student, index) => {
+    const row = document.createElement("tr");
+    row.className = "hover:bg-slate-50 transition";
 
-      const currentValue = dropdown.value;
-      const availableMonths = getAvailableMonths();
+    const numberCell = document.createElement("td");
+    numberCell.className = "p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1";
+    numberCell.textContent = index + 1;
+    row.appendChild(numberCell);
 
-      dropdown.innerHTML = '<option value="all">Show All Dates</option>';
+    const nameCell = document.createElement("td");
+    nameCell.className = "p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2";
+    nameCell.textContent = student.name;
+    row.appendChild(nameCell);
 
-      availableMonths.forEach(ym => {
-        const option = document.createElement('option');
-        option.value = ym;
-        option.innerText = formatMonthYear(ym);
-        dropdown.appendChild(option);
-      });
+    filteredDates.forEach(date => {
+      const cell = document.createElement("td");
+      cell.className = "p-2 border-r border-slate-200 text-center";
 
-      if (currentValue && [...dropdown.options].some(o => o.value === currentValue)) {
-        dropdown.value = currentValue;
+      const status = attendance[currentTab][student.id + "_" + date] || "";
+      const button = document.createElement("button");
+
+      button.className = "w-full h-9 rounded transition text-xs font-bold";
+
+      if (status === "P") {
+        button.classList.add("bg-emerald-500", "text-white", "hover:bg-emerald-600");
+      } else if (status === "A") {
+        button.classList.add("bg-rose-500", "text-white", "hover:bg-rose-600");
       } else {
-        dropdown.value = 'all';
+        button.classList.add("bg-slate-50", "text-slate-400", "hover:bg-slate-100");
       }
-    }
 
-    function render() {
-      updateFilterDropdown();
+      button.textContent = status || "-";
+      button.title = "Click to change attendance";
+      button.setAttribute(
+        "aria-label",
+        student.name + ", " + date + ": " + (status || "not marked")
+      );
 
-      const filterElement = document.getElementById('date-filter');
-      const selectedFilter = filterElement ? filterElement.value : 'all';
-      let catDates = dates[currentTab];
-      let filteredDates = [];
+      button.onclick = () => toggleAttendance(student.id, date);
 
-      if (selectedFilter === 'all') {
-        filteredDates = catDates;
-        document.getElementById('filter-status').innerText = `Showing all ${catDates.length} dates.`;
-      } else {
-        filteredDates = catDates.filter(d => d.startsWith(selectedFilter));
-        const monthName = formatMonthYear(selectedFilter);
-        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${catDates.length} total dates in ${monthName}.`;
-      }
-      
-      // Update UI Header Texts
-      const titles = { parades: 'Parade Attendance Register', events: 'Event Attendance Register', officials: 'Official Duties Attendance Register' };
-      const badges = { parades: 'Viewing Parades', events: 'Viewing Events', officials: 'Viewing Officials' };
-      const addBtnLabels = { parades: '+ Add Parade Date', events: '+ Add Event Date', officials: '+ Add Official Date' };
-      const pctLabels = { parades: 'Parade %', events: 'Event %', officials: 'Official %' };
+      cell.appendChild(button);
+      row.appendChild(cell);
+    });
 
-      document.getElementById('section-title').innerText = titles[currentTab];
-      document.getElementById('section-badge').innerText = badges[currentTab];
-      document.getElementById('btn-add-date').innerText = addBtnLabels[currentTab];
-      document.getElementById('header-pct-label').innerText = pctLabels[currentTab];
+    const percentageCell = document.createElement("td");
+    percentageCell.className = "p-3 border-l border-slate-200 bg-slate-50 text-center";
 
-      // Build Table Headers
-      const headerRow = document.getElementById('table-header-row');
-      let dateHeadersHTML = filteredDates.map(d => `
-        <th class="p-3 border-r border-slate-200 min-w-[130px] text-center">
-          <div class="flex items-center justify-between gap-2">
-            <span>${d}</span>
-            <button onclick="deleteDate('${d}')" class="text-slate-400 hover:text-red-600 font-bold px-1 text-sm" title="Delete Date">×</button>
-          </div>
-        </th>
-      `).join('');
+    const percentage = calculatePercentage(currentTab, student.id);
+    const badge = document.createElement("span");
+    badge.className = "bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs";
+    badge.textContent = percentage === null ? "—" : percentage + "%";
+    badge.title = percentage === null
+      ? "No attendance marked"
+      : "Weighted attendance percentage";
 
-      headerRow.innerHTML = `
-        <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
-        <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-        ${dateHeadersHTML}
-        <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">${pctLabels[currentTab]}</th>
-        <th class="p-3 text-center w-20">Action</th>
-      `;
+    percentageCell.appendChild(badge);
+    row.appendChild(percentageCell);
 
-      // Build Student Rows
-      const rowsContainer = document.getElementById('student-rows');
-      rowsContainer.innerHTML = students.map((student, index) => {
-        const pct = calculatePercentage(currentTab, student.id);
+    const actionCell = document.createElement("td");
+    actionCell.className = "p-3 text-center";
 
-        const dateCells = filteredDates.map(d => {
-          const status = (attendance[currentTab] && attendance[currentTab][`${student.id}_${d}`]) || '';
-          let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
-          if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
-          if (status === 'A') bgClass = 'bg-rose-500 text-white font-bold hover:bg-rose-600';
+    const deleteStudentButton = document.createElement("button");
+    deleteStudentButton.className = "text-slate-400 hover:text-red-600 text-xs";
+    deleteStudentButton.textContent = "Delete";
+    deleteStudentButton.onclick = () => deleteStudent(student.id);
 
-          return `
-            <td class="p-2 border-r border-slate-200 text-center">
-              <button onclick="toggleAttendance('${student.id}', '${d}')" class="w-full h-9 rounded transition text-xs flex items-center justify-center ${bgClass}">
-                ${status || '-'}
-              </button>
-            </td>
-          `;
-        }).join('');
+    actionCell.appendChild(deleteStudentButton);
+    row.appendChild(actionCell);
 
-        const pctBadge = `<span class="bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs">${pct}%</span>`;
+    rowsContainer.appendChild(row);
+  });
 
-        return `
-          <tr class="hover:bg-slate-50 transition">
-            <td class="p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1">${index + 1}</td>
-            <td class="p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2">${student.name}</td>
-            ${dateCells}
-            <td class="p-3 border-l border-slate-200 bg-slate-50/50 text-center font-bold">${pctBadge}</td>
-            <td class="p-3 text-center">
-              <button onclick="deleteStudent('${student.id}')" class="text-slate-400 hover:text-red-600 text-xs">Delete</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
+  document.getElementById("stat-cadets").textContent = students.length;
+  document.getElementById("stat-parades").textContent = dates.parades.length;
+  document.getElementById("stat-events").textContent = dates.events.length;
+  document.getElementById("stat-officials").textContent = dates.officials.length;
+}
 
-      // Update Stats Bar
-      document.getElementById('stat-cadets').innerText = students.length;
-      document.getElementById('stat-parades').innerText = dates.parades.length;
-      document.getElementById('stat-events').innerText = dates.events.length;
-      document.getElementById('stat-officials').innerText = dates.officials.length;
-    }
+// First display
+render();
+</script>
 
-    render();
-  </script>
 </body>
 </html>
