@@ -75,7 +75,7 @@
       </div>
     </div>
 
-    <!-- Filter Bar -->
+    <!-- Filter Bar (This is Option 3) -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Parade Dates:</label>
@@ -86,7 +86,7 @@
       <p id="filter-status" class="text-sm text-slate-500 italic">Showing all parades.</p>
     </div>
 
-    <!-- Main Spreadsheet Table with Sticky Frozen Columns -->
+    <!-- Main Spreadsheet Table -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="overflow-x-auto max-w-full">
         <table class="w-full text-left border-collapse min-w-max">
@@ -226,6 +226,8 @@
 
     function updateFilterDropdown() {
       const dropdown = document.getElementById('date-filter');
+      if (!dropdown) return;
+
       const currentValue = dropdown.value;
       const availableMonths = getAvailableMonths();
 
@@ -246,7 +248,8 @@
     function render() {
       updateFilterDropdown();
 
-      const selectedFilter = document.getElementById('date-filter').value;
+      const filterElement = document.getElementById('date-filter');
+      const selectedFilter = filterElement ? filterElement.value : 'all';
       let filteredDates = [];
 
       if (selectedFilter === 'all') {
