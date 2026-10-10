@@ -1,97 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NCC Battalion Attendance Register</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .sticky-col-1,
+    .sticky-header-1 {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background: #fff;
+      min-width: 48px;
+    }
+
+    .sticky-col-2,
+    .sticky-header-2 {
+      position: sticky;
+      left: 48px;
+      z-index: 10;
+      background: #fff;
+    }
+
+    .sticky-header-1,
+    .sticky-header-2 {
+      z-index: 20;
+      background: #f8fafc;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
+
+<div class="max-w-7xl mx-auto space-y-6">
+
+  <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="w-3 h-3 bg-red-600 rounded-full"></span>
+        <span class="w-3 h-3 bg-blue-900 rounded-full"></span>
+        <span class="w-3 h-3 bg-sky-400 rounded-full"></span>
+
+        <h1 class="text-2xl font-bold text-slate-900 ml-2">
+          NCC Candidate Attendance Register
+        </h1>
+      </div>
+
+      <p id="connection-status" class="text-sm text-slate-500 mt-2">
+        Starting register...
+      </p>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button onclick="addStudent()"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+        + Add Cadet Name
+      </button>
+
+      <button id="btn-add-date" onclick="addDate()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+        + Add Parade Date
+      </button>
+
+      <button onclick="exportToCSV()"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm">
+        Export CSV
+      </button>
+    </div>
+  </header>
+
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Total Cadets (this tab)
+      </p>
+      <p id="stat-cadets" class="text-2xl font-bold mt-1">0</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Parade Dates
+      </p>
+      <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Event Dates
+      </p>
+      <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Official Dates
+      </p>
+      <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
+    </div>
+
+  </div>
+
+  <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4 overflow-x-auto">
+
+    <button onclick="switchTab('parades')" id="tab-parades"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600 whitespace-nowrap">
+      Parades
+    </button>
+
+    <button onclick="switchTab('events')" id="tab-events"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap">
+      Events
+    </button>
+
+    <button onclick="switchTab('officials')" id="tab-officials"
+      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap">
+      Officials
+    </button>
+
+  </div>
+
+  <div class="bg-white shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+
+    <div class="flex items-center gap-3">
+      <label for="date-filter" class="text-sm font-medium text-slate-600">
+        Filter Dates by Month:
+      </label>
+
+      <select id="date-filter" onchange="render()"
+        class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
+        <option value="all">Show All Dates</option>
+      </select>
+    </div>
+
+    <p id="filter-status" class="text-sm text-slate-500">Ready</p>
+
+  </div>
+
+  <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="overflow-x-auto max-w-full">
+
+      <table class="w-full text-left border-collapse min-w-max">
+        <thead>
+          <tr id="table-header-row"
+            class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
+          </tr>
+        </thead>
+
+        <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+</div>
 
 <script>
-  // ==========================================
-  // 1. SUPABASE CONNECTION
-  // ==========================================
-
+  // Supabase settings.
+  // Paste your existing public anon key below if you want cloud syncing.
   const SUPABASE_URL =
-    'sb_publishable_qBMH8I5mPVE4UypLEV6F9w_AVz0ozFK';
+    'https://pdniwpvobbbepipsxskt.supabase.co';
 
-  // Keep the public key you already added.
   const SUPABASE_ANON_KEY =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
+    'PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE';
 
   let db = null;
 
   try {
-    if (window.supabase) {
+    if (
+      window.supabase &&
+      SUPABASE_ANON_KEY !== 'PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE'
+    ) {
       db = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
       );
     }
   } catch (error) {
-    console.error('Supabase initialization error:', error);
+    console.error('Supabase initialization failed:', error);
   }
 
   const CATEGORIES = ['parades', 'events', 'officials'];
 
-  const TABLES = {
-    parades: 'ncc_parades_register',
-    events: 'ncc_events_register',
-    officials: 'ncc_officials_register'
-  };
-
-  const REPORT_VIEWS = {
-    parades: 'ncc_parades_report',
-    events: 'ncc_events_report',
-    officials: 'ncc_officials_report'
-  };
-
-  const LABELS = {
-    parades: 'Parade',
-    events: 'Event',
-    officials: 'Official Duty'
-  };
-
   let currentTab = 'parades';
-
-  // ==========================================
-  // 2. LOCAL STORAGE BACKUP
-  // ==========================================
 
   function readLocalJSON(key, fallback) {
     try {
-      const value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : fallback;
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch (error) {
-      console.error('Local storage read error:', error);
+      console.warn('Could not read saved data:', key, error);
       return fallback;
     }
   }
 
+  // Each tab has its own separate cadet list.
   const defaultStudents = {
     parades: [
-      { id: 'demo-p1', name: 'Ansh' },
-      { id: 'demo-p2', name: 'Pawan' },
-      { id: 'demo-p3', name: 'Pranav' }
+      { id: '1', name: 'Ansh' },
+      { id: '2', name: 'Pawan' },
+      { id: '3', name: 'Pranav' }
     ],
+
     events: [],
+
     officials: []
   };
 
   let studentsByCategory = readLocalJSON(
     'ncc_students_by_category',
-    defaultStudents
+    null
   );
 
-  let dates = readLocalJSON('ncc_dates', {
-    parades: [],
-    events: [],
-    officials: []
-  });
+  // Migrate an older shared list into the Parades tab.
+  if (!studentsByCategory || typeof studentsByCategory !== 'object') {
+    const oldStudents = readLocalJSON('ncc_students', null);
 
-  let attendance = readLocalJSON('ncc_attendance', {
-    parades: {},
-    events: {},
-    officials: {}
-  });
+    studentsByCategory = {
+      parades:
+        Array.isArray(oldStudents) && oldStudents.length
+          ? oldStudents
+          : defaultStudents.parades,
+
+      events: [],
+
+      officials: []
+    };
+  }
 
   CATEGORIES.forEach(category => {
     if (!Array.isArray(studentsByCategory[category])) {
       studentsByCategory[category] = [];
     }
+  });
 
+  let dates = readLocalJSON('ncc_dates', {
+    parades: ['2026-05-19', '2026-05-26'],
+    events: ['2026-06-01'],
+    officials: ['2026-06-10']
+  });
+
+  let attendance = readLocalJSON('ncc_attendance', {
+    parades: {
+      '1_2026-05-19': 'P'
+    },
+
+    events: {},
+
+    officials: {}
+  });
+
+  CATEGORIES.forEach(category => {
     if (!Array.isArray(dates[category])) {
       dates[category] = [];
     }
@@ -103,14 +267,6 @@
       attendance[category] = {};
     }
   });
-
-  // IDs of cadets that exist in Supabase.
-  // Local-only cadets are not sent to Supabase until created there.
-  let cloudCadetIds = {
-    parades: new Set(),
-    events: new Set(),
-    officials: new Set()
-  };
 
   function getCurrentStudents() {
     return studentsByCategory[currentTab];
@@ -133,92 +289,106 @@
         JSON.stringify(attendance)
       );
     } catch (error) {
-      console.error('Local save error:', error);
-      setStatus('Local backup could not be saved.');
+      console.error('Local save failed:', error);
+      alert('Unable to save data in this browser.');
     }
   }
 
-  function setStatus(message) {
-    const element = document.getElementById('connection-status');
-    if (element) element.textContent = message;
-  }
-
-  // ==========================================
-  // 3. LOAD DATA FROM THREE TABLES
-  // ==========================================
-
   async function loadDataFromCloud() {
     if (!db) {
-      setStatus('Local Mode: Supabase is not connected.');
+      document.getElementById('connection-status').textContent =
+        'Local Mode Active (saved in this browser)';
+
       render();
       return;
     }
 
-    setStatus('Connecting to Supabase...');
+    document.getElementById('connection-status').textContent =
+      'Syncing with Supabase...';
 
     try {
-      for (const category of CATEGORIES) {
-        const table = TABLES[category];
+      const {
+        data: cadetData,
+        error: cadetError
+      } = await db.from('cadets').select('*');
 
-        const { data, error } = await db
-          .from(table)
-          .select('id, cadet_name, attendance_date, attendance')
-          .order('attendance_date', { ascending: true });
+      if (cadetError) throw cadetError;
 
-        if (error) throw error;
+      if (Array.isArray(cadetData)) {
+        CATEGORIES.forEach(category => {
+          const categoryRows = cadetData.filter(
+            row => row.category === category
+          );
 
-        // Rebuild this category using its own table.
-        studentsByCategory[category] = [];
-        dates[category] = [];
-        attendance[category] = {};
-        cloudCadetIds[category] = new Set();
-
-        const uniqueNames = new Map();
-
-        (data || []).forEach(row => {
-          const name = row.cadet_name;
-
-          if (!uniqueNames.has(name)) {
-            uniqueNames.set(name, {
-              id: `name-${category}-${name}`,
-              name
-            });
+          if (categoryRows.length) {
+            studentsByCategory[category] = categoryRows.map(row => ({
+              id: String(row.id),
+              name: row.name,
+              category
+            }));
           }
+        });
+      }
 
-          if (row.attendance_date) {
-            if (!dates[category].includes(row.attendance_date)) {
-              dates[category].push(row.attendance_date);
-            }
+      const {
+        data: attData,
+        error: attError
+      } = await db.from('attendance').select('*');
 
+      if (attError) throw attError;
+
+      if (Array.isArray(attData) && attData.length) {
+        dates = {
+          parades: [],
+          events: [],
+          officials: []
+        };
+
+        attendance = {
+          parades: {},
+          events: {},
+          officials: {}
+        };
+
+        attData.forEach(row => {
+          const category = row.category;
+
+          if (!CATEGORIES.includes(category)) return;
+
+          if (
+            row.type === 'date' &&
+            row.date_str &&
+            !dates[category].includes(row.date_str)
+          ) {
+            dates[category].push(row.date_str);
+          } else if (
+            row.type === 'record' &&
+            row.date_str &&
+            row.cadet_id != null
+          ) {
             attendance[category][
-              `${name}_${row.attendance_date}`
-            ] = row.attendance;
+              `${row.cadet_id}_${row.date_str}`
+            ] = row.status;
           }
-
-          cloudCadetIds[category].add(name);
         });
 
-        studentsByCategory[category] =
-          Array.from(uniqueNames.values());
-
-        dates[category].sort();
+        CATEGORIES.forEach(category => dates[category].sort());
       }
 
       saveLocal();
-      setStatus('Connected to Supabase • All three registers loaded.');
+
+      document.getElementById('connection-status').textContent =
+        'Cloud Sync Active';
+
     } catch (error) {
-      console.error('Supabase load error:', error);
-      setStatus(
-        'Supabase error: ' + (error.message || 'Check database settings.')
-      );
+      console.error('Cloud sync failed:', error);
+
+      document.getElementById('connection-status').textContent =
+        'Local Mode Active • Cloud sync unavailable';
     }
 
     render();
   }
-
-  // ==========================================
-  // 4. SWITCH BETWEEN TABS
-  // ==========================================
 
   function switchTab(tab) {
     if (!CATEGORIES.includes(tab)) return;
@@ -236,111 +406,113 @@
     render();
   }
 
-  // ==========================================
-  // 5. ADD CADET
-  // ==========================================
-
   async function addStudent() {
+    const label = {
+      parades: 'Parade',
+      events: 'Event',
+      officials: 'Official Duty'
+    };
+
     const name = prompt(
-      `Enter ${LABELS[currentTab]} Cadet Name:`
+      `Enter ${label[currentTab]} Cadet Name:`
     );
 
     if (!name || !name.trim()) return;
 
     const cleanName = name.trim();
 
-    if (getCurrentStudents().some(
-      student => student.name.toLowerCase() === cleanName.toLowerCase()
-    )) {
-      alert('This cadet already exists in this tab.');
+    const duplicate = getCurrentStudents().some(
+      student =>
+        student.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (duplicate) {
+      alert('This name is already in this tab.');
       return;
     }
 
-    if (db) {
-      setStatus('Saving cadet to Supabase...');
-
-      // A name is added to the current activity when its first
-      // attendance entry is created. We therefore keep the new
-      // name locally until a date and attendance are recorded.
-    }
-
-    studentsByCategory[currentTab].push({
+    const newCadet = {
       id: `local-${Date.now()}`,
-      name: cleanName
-    });
+      name: cleanName,
+      category: currentTab
+    };
+
+    studentsByCategory[currentTab].push(newCadet);
 
     saveLocal();
     render();
 
     if (db) {
-      setStatus(
-        'Cadet added locally. Mark attendance to create a database record.'
-      );
+      const { error } = await db.from('cadets').insert([
+        {
+          name: cleanName,
+          category: currentTab
+        }
+      ]);
+
+      if (error) {
+        console.error('Cloud student save failed:', error);
+
+        document.getElementById('connection-status').textContent =
+          'Saved locally • Cloud save failed';
+      } else {
+        await loadDataFromCloud();
+      }
     }
   }
 
-  // ==========================================
-  // 6. DELETE CADET
-  // ==========================================
-
   async function deleteStudent(id) {
-    if (!confirm('Delete this cadet from this activity?')) return;
-
-    const student = getCurrentStudents().find(
-      item => String(item.id) === String(id)
-    );
-
-    if (!student) return;
-
-    const name = student.name;
-
-    if (
-      db &&
-      cloudCadetIds[currentTab].has(name)
-    ) {
-      const { error } = await db
-        .from(TABLES[currentTab])
-        .delete()
-        .eq('cadet_name', name);
-
-      if (error) {
-        console.error('Delete error:', error);
-        alert('Could not delete from Supabase: ' + error.message);
-        return;
-      }
-    }
+    if (!confirm('Delete this cadet from this tab?')) return;
 
     studentsByCategory[currentTab] =
       getCurrentStudents().filter(
-        item => String(item.id) !== String(id)
+        student => String(student.id) !== String(id)
       );
 
+    // Remove only this cadet's attendance from the current tab.
     Object.keys(attendance[currentTab]).forEach(key => {
-      if (key.startsWith(`${name}_`)) {
+      if (key.startsWith(`${id}_`)) {
         delete attendance[currentTab][key];
       }
     });
 
-    cloudCadetIds[currentTab].delete(name);
-
     saveLocal();
     render();
-  }
 
-  // ==========================================
-  // 7. ADD DATE
-  // ==========================================
+    if (db && !String(id).startsWith('local-')) {
+      const { error } = await db
+        .from('cadets')
+        .delete()
+        .eq('id', id)
+        .eq('category', currentTab);
+
+      if (error) console.error('Cloud delete failed:', error);
+
+      const { error: attendanceError } = await db
+        .from('attendance')
+        .delete()
+        .eq('cadet_id', id)
+        .eq('category', currentTab);
+
+      if (attendanceError) {
+        console.error('Cloud attendance delete failed:', attendanceError);
+      }
+    }
+  }
 
   async function addDate() {
     const date = prompt(
-      `Enter ${LABELS[currentTab]} date (YYYY-MM-DD):`,
-      new Date().toLocaleDateString('en-CA')
+      'Enter date (YYYY-MM-DD):',
+      new Date().toISOString().slice(0, 10)
     );
 
     if (!date) return;
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      alert('Enter the date in YYYY-MM-DD format.');
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      Number.isNaN(Date.parse(date))
+    ) {
+      alert('Please enter a valid date in YYYY-MM-DD format.');
       return;
     }
 
@@ -355,30 +527,24 @@
     saveLocal();
     render();
 
-    // The tables store a date alongside each cadet's attendance.
-    // A date with no attendance records is only stored locally.
-    setStatus('Date added. Mark attendance to save records to Supabase.');
-  }
-
-  // ==========================================
-  // 8. DELETE DATE
-  // ==========================================
-
-  async function deleteDate(date) {
-    if (!confirm(`Delete ${date} from ${LABELS[currentTab]}?`)) return;
-
     if (db) {
-      const { error } = await db
-        .from(TABLES[currentTab])
-        .delete()
-        .eq('attendance_date', date);
+      const { error } = await db.from('attendance').insert([
+        {
+          name: `${currentTab}_date_${date}`,
+          category: currentTab,
+          type: 'date',
+          date_str: date
+        }
+      ]);
 
       if (error) {
-        console.error('Delete date error:', error);
-        alert('Could not delete date records: ' + error.message);
-        return;
+        console.error('Cloud date save failed:', error);
       }
     }
+  }
+
+  async function deleteDate(date) {
+    if (!confirm(`Delete date ${date} from ${currentTab}?`)) return;
 
     dates[currentTab] = dates[currentTab].filter(
       item => item !== date
@@ -392,29 +558,26 @@
 
     saveLocal();
     render();
+
+    if (db) {
+      const { error } = await db
+        .from('attendance')
+        .delete()
+        .eq('category', currentTab)
+        .eq('date_str', date);
+
+      if (error) console.error('Cloud date delete failed:', error);
+    }
   }
 
-  // ==========================================
-  // 9. MARK ATTENDANCE
-  // ==========================================
-
   async function toggleAttendance(studentId, date) {
-    const student = getCurrentStudents().find(
-      item => String(item.id) === String(studentId)
-    );
+    const key = `${studentId}_${date}`;
 
-    if (!student) return;
-
-    const name = student.name;
-    const key = `${name}_${date}`;
     const current = attendance[currentTab][key];
 
-    // First click: Present
-    // Second click: Absent
-    // Third click: blank
-    const next = !current ? 'P' : current === 'P' ? 'A' : '';
-
-    const oldValue = current || '';
+    // Click once for Present, again for Absent, and again to clear.
+    const next =
+      !current ? 'P' : current === 'P' ? 'A' : '';
 
     if (next) {
       attendance[currentTab][key] = next;
@@ -425,94 +588,65 @@
     saveLocal();
     render();
 
-    if (!db) {
-      setStatus('Saved in this browser only.');
+    if (!db || String(studentId).startsWith('local-')) return;
+
+    const { error: deleteError } = await db
+      .from('attendance')
+      .delete()
+      .eq('category', currentTab)
+      .eq('type', 'record')
+      .eq('cadet_id', studentId)
+      .eq('date_str', date);
+
+    if (deleteError) {
+      console.error('Cloud attendance update failed:', deleteError);
       return;
     }
 
-    const table = TABLES[currentTab];
-
-    try {
-      // Remove any old record for this cadet and date first.
-      const { error: deleteError } = await db
-        .from(table)
-        .delete()
-        .eq('cadet_name', name)
-        .eq('attendance_date', date);
-
-      if (deleteError) throw deleteError;
-
-      if (next) {
-        const status = next === 'P' ? 'Present' : 'Absent';
-
-        const { error: insertError } = await db
-          .from(table)
-          .insert([{
-            cadet_name: name,
-            attendance_date: date,
-            attendance: status
-          }]);
-
-        if (insertError) throw insertError;
-
-        cloudCadetIds[currentTab].add(name);
-      }
-
-      setStatus('Attendance saved to ' + table + '.');
-    } catch (error) {
-      console.error('Attendance save error:', error);
-
-      // Restore the previous value if Supabase rejected the change.
-      if (oldValue) {
-        attendance[currentTab][key] = oldValue;
-      } else {
-        delete attendance[currentTab][key];
-      }
-
-      saveLocal();
-      render();
-
-      setStatus('Save failed: ' + error.message);
-      alert(
-        'Supabase could not save attendance.\n\n' +
-        error.message +
-        '\n\nCheck your table columns and security policies.'
+    if (next) {
+      const student = getCurrentStudents().find(
+        item => String(item.id) === String(studentId)
       );
+
+      const { error } = await db.from('attendance').insert([
+        {
+          name: `${student ? student.name : 'Cadet'}_${date}`,
+          category: currentTab,
+          type: 'record',
+          cadet_id: studentId,
+          date_str: date,
+          status: next
+        }
+      ]);
+
+      if (error) {
+        console.error('Cloud attendance save failed:', error);
+      }
     }
   }
 
-  // ==========================================
-  // 10. CALCULATE ATTENDANCE PERCENTAGE
-  // ==========================================
-
   function calculatePercentage(category, studentId) {
-    const student = studentsByCategory[category].find(
-      item => String(item.id) === String(studentId)
-    );
+    const categoryDates = dates[category] || [];
 
-    if (!student) return 0;
-
-    const name = student.name;
     let present = 0;
     let marked = 0;
 
-    dates[category].forEach(date => {
-      const value = attendance[category][`${name}_${date}`];
+    categoryDates.forEach(date => {
+      const status =
+        attendance[category][`${studentId}_${date}`];
 
-      if (value === 'P' || value === 'Present') {
+      if (status === 'P') {
         present++;
         marked++;
-      } else if (value === 'A' || value === 'Absent') {
+      } else if (status === 'A') {
         marked++;
       }
     });
 
-    return marked ? Math.round((present / marked) * 100) : 0;
+    return marked
+      ? Math.round((present / marked) * 100)
+      : 0;
   }
-
-  // ==========================================
-  // 11. SAFE HTML OUTPUT
-  // ==========================================
 
   function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, character => ({
@@ -524,25 +658,28 @@
     })[character]);
   }
 
-  // ==========================================
-  // 12. EXPORT CSV
-  // ==========================================
-
   function exportToCSV() {
-    const rows = [[
-      'CATEGORY',
-      'SR NO',
-      'Cadet Name',
-      'Date',
-      'Attendance',
-      'Percentage'
-    ]];
+    const rows = [
+      [
+        'CATEGORY',
+        'SR NO',
+        'Student Name',
+        'Date',
+        'Status',
+        'Percentage'
+      ]
+    ];
 
     CATEGORIES.forEach(category => {
       studentsByCategory[category].forEach((student, index) => {
+        const percentage = calculatePercentage(
+          category,
+          student.id
+        );
+
         dates[category].forEach(date => {
           const status =
-            attendance[category][`${student.name}_${date}`] || '-';
+            attendance[category][`${student.id}_${date}`] || '-';
 
           rows.push([
             category.toUpperCase(),
@@ -550,7 +687,7 @@
             student.name,
             date,
             status,
-            calculatePercentage(category, student.id) + '%'
+            `${percentage}%`
           ]);
         });
       });
@@ -577,23 +714,20 @@
     document.body.appendChild(link);
     link.click();
     link.remove();
+
     URL.revokeObjectURL(url);
   }
-
-  // ==========================================
-  // 13. MONTH FILTER
-  // ==========================================
 
   function getAvailableMonths() {
     return [
       ...new Set(
-        dates[currentTab].map(date => date.slice(0, 7))
+        (dates[currentTab] || []).map(date => date.slice(0, 7))
       )
     ].sort();
   }
 
   function formatMonthYear(value) {
-    const [year, month] = value.split('-');
+    const parts = value.split('-');
 
     const names = [
       'January', 'February', 'March', 'April',
@@ -601,7 +735,7 @@
       'September', 'October', 'November', 'December'
     ];
 
-    return `${names[Number(month) - 1]} ${year}`;
+    return `${names[Number(parts[1]) - 1]} ${parts[0]}`;
   }
 
   function updateFilterDropdown() {
@@ -625,10 +759,6 @@
     ) ? previous : 'all';
   }
 
-  // ==========================================
-  // 14. RENDER TABLE
-  // ==========================================
-
   function render() {
     const students = getCurrentStudents();
 
@@ -637,7 +767,7 @@
     const selected =
       document.getElementById('date-filter').value;
 
-    const allDates = dates[currentTab];
+    const allDates = dates[currentTab] || [];
 
     const visibleDates = selected === 'all'
       ? allDates
@@ -646,13 +776,21 @@
     document.getElementById('filter-status').textContent =
       selected === 'all'
         ? `Showing all ${visibleDates.length} dates.`
-        : `Showing ${visibleDates.length} dates in ${formatMonthYear(selected)}.`;
+        : `Showing ${visibleDates.length} of ${allDates.length} dates in ${formatMonthYear(selected)}.`;
+
+    const labels = {
+      parades: 'Parade',
+      events: 'Event',
+      officials: 'Official Duty'
+    };
 
     document.getElementById('btn-add-date').textContent =
-      `+ Add ${LABELS[currentTab]} Date`;
+      `+ Add ${labels[currentTab]} Date`;
 
     document.getElementById('table-header-row').innerHTML = `
-      <th class="p-3 border-r w-12 text-center sticky-header-1">#</th>
+      <th class="p-3 border-r w-12 text-center sticky-header-1">
+        #
+      </th>
 
       <th class="p-3 border-r min-w-[200px] sticky-header-2">
         Cadet Name
@@ -662,19 +800,24 @@
         <th class="p-3 border-r min-w-[130px] text-center">
           <div class="flex items-center justify-between gap-2">
             <span>${escapeHTML(date)}</span>
+
             <button
               onclick="deleteDate('${date}')"
               class="text-slate-400 hover:text-red-600 font-bold px-1"
-              title="Delete date">×</button>
+              title="Delete date">
+              ×
+            </button>
           </div>
         </th>
       `).join('')}
 
       <th class="p-3 border-l bg-slate-100 text-center w-28">
-        ${LABELS[currentTab]} %
+        ${labels[currentTab]} %
       </th>
 
-      <th class="p-3 text-center w-24">Action</th>
+      <th class="p-3 text-center w-24">
+        Action
+      </th>
     `;
 
     const body = document.getElementById('student-rows');
@@ -684,7 +827,7 @@
         <tr>
           <td colspan="${visibleDates.length + 4}"
             class="text-center p-6 text-slate-400">
-            No cadets in ${LABELS[currentTab]}.
+            No cadets in ${labels[currentTab]}.
             Click "+ Add Cadet Name" to add one.
           </td>
         </tr>
@@ -692,12 +835,8 @@
     } else {
       body.innerHTML = students.map((student, index) => {
         const cells = visibleDates.map(date => {
-          const value =
-            attendance[currentTab][`${student.name}_${date}`] || '';
-
-          const status = value === 'Present' ? 'P'
-            : value === 'Absent' ? 'A'
-            : value;
+          const status =
+            attendance[currentTab][`${student.id}_${date}`] || '';
 
           const style = status === 'P'
             ? 'bg-emerald-500 text-white font-bold hover:bg-emerald-600'
@@ -705,10 +844,12 @@
               ? 'bg-rose-500 text-white font-bold hover:bg-rose-600'
               : 'bg-slate-50 text-slate-500 hover:bg-slate-100';
 
+          const safeId = String(student.id).replace(/'/g, "\\'");
+
           return `
             <td class="p-2 border-r text-center">
               <button
-                onclick="toggleAttendance('${String(student.id).replace(/'/g, "\\'")}','${date}')"
+                onclick="toggleAttendance('${safeId}','${date}')"
                 class="w-full h-9 rounded text-xs ${style}">
                 ${status || '-'}
               </button>
@@ -721,8 +862,11 @@
           student.id
         );
 
+        const safeId = String(student.id).replace(/'/g, "\\'");
+
         return `
           <tr class="hover:bg-slate-50">
+
             <td class="p-3 border-r text-center sticky-col-1">
               ${index + 1}
             </td>
@@ -741,11 +885,12 @@
 
             <td class="p-3 text-center">
               <button
-                onclick="deleteStudent('${String(student.id).replace(/'/g, "\\'")}')"
+                onclick="deleteStudent('${safeId}')"
                 class="text-rose-600 hover:text-rose-800 font-semibold text-xs">
                 Delete
               </button>
             </td>
+
           </tr>
         `;
       }).join('');
@@ -764,11 +909,12 @@
       dates.officials.length;
   }
 
-  // ==========================================
-  // 15. START
-  // ==========================================
-
+  // Start the register.
   saveLocal();
   render();
   loadDataFromCloud();
+
 </script>
+
+</body>
+</html>
