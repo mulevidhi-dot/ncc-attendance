@@ -84,19 +84,6 @@
         class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
         Export CSV
       </button>
-
-      <button onclick="backupData()"
-        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
-        Backup Data
-      </button>
-
-      <button onclick="document.getElementById('restore-file').click()"
-        class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
-        Restore Data
-      </button>
-
-      <input id="restore-file" type="file" accept=".json,application/json"
-        class="hidden" onchange="restoreData(event)">
     </div>
   </header>
 
@@ -505,23 +492,172 @@ function downloadFile(content, filename, type) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function backupData() {
-  const backup = { students, dates, attendance, weights };
-  downloadFile(JSON.stringify(backup, null, 2), "NCC_Backup.json", "application/json");
+function getAvailableMonths() {
+  return [...new Set(dates[currentTab].map(date => date.substring(0, 7)))].sort();
 }
 
-function restoreData(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
+function formatMonthYear(value) {
+  const parts = value.split("-");
+  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+  return date.toLocaleString("en-IN", { month: "long", year: "numeric" });
+}
 
-  const reader = new FileReader();
-  reader.onload = function() {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || !Array.isArray(data.students) || !data.dates || !data.attendance) {
-        throw new Error("Invalid backup file");
+function updateFilterDropdown() {
+  const dropdown = document.getElementById("date-filter");
+  const previousValue = dropdown.value;
+  const months = getAvailableMonths();
+
+  dropdown.innerHTML = '<option value="all">Show All Dates</option>';
+  months.forEach(month => {
+    const option = document.createElement("option");
+    option.value = month;
+    option.textContent = formatMonthYear(month);
+    dropdown.appendChild(option);
+  });
+
+  dropdown.value = months.includes(previousValue) || previousValue === "all" ? previousValue : "all";
+}
+
+function render() {
+  updateFilterDropdown();
+
+  const selectedFilter = document.getElementById("date-filter").value;
+  const categoryDates = dates[currentTab];
+
+  const filteredDates = selectedFilter === "all"
+    ? categoryDates
+    : categoryDates.filter(date => date.startsWith(selectedFilter));
+
+  document.getElementById("filter-status").textContent =
+    selectedFilter === "all"
+      ? "Showing all " + filteredDates.length + " dates."
+      : "Showing " + filteredDates.length + " of " + categoryDates.length + " dates.";
+
+  document.getElementById("section-title").textContent = TITLES[currentTab];
+  document.getElementById("section-badge").textContent = BADGES[currentTab];
+  document.getElementById("btn-add-date").textContent = DATE_BUTTONS[currentTab];
+
+  const headerRow = document.getElementById("table-header-row");
+  const headerParts = [
+    '<th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>',
+    '<th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Cadet Name</th>'
+  ];
+
+  filteredDates.forEach(date => {
+    const th = document.createElement("th");
+    th.className = "p-3 border-r border-slate-200 min-w-[130px] text-center";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "flex flex-col items-center gap-1";
+
+    const dateLabel = document.createElement("span");
+    dateLabel.textContent = date;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "text-slate-400 hover:text-red-600 font-bold text-xs cursor-pointer";
+    deleteButton.textContent = "× Delete";
+    deleteButton.onclick = () => deleteDate(date);
+
+    wrapper.append(dateLabel, deleteButton);
+    th.appendChild(wrapper);
+    headerParts.push(th);
+  });
+
+  const percentageHeader = document.createElement("th");
+  percentageHeader.className = "p-3 border-l border-slate-200 bg-slate-100 text-center w-28";
+  percentageHeader.textContent = PERCENTAGE_LABELS[currentTab];
+  headerParts.push(percentageHeader);
+
+  const actionHeader = document.createElement("th");
+  actionHeader.className = "p-3 text-center w-20";
+  actionHeader.textContent = "Action";
+  headerParts.push(actionHeader);
+
+  headerRow.replaceChildren();
+  headerParts.forEach(part => {
+    if (typeof part === "string") {
+      const template = document.createElement("template");
+      template.innerHTML = part;
+      headerRow.appendChild(template.content);
+    } else {
+      headerRow.appendChild(part);
+    }
+  });
+
+  const rowsContainer = document.getElementById("student-rows");
+  rowsContainer.innerHTML = "";
+
+  students.forEach((student, index) => {
+    const row = document.createElement("tr");
+    row.className = "hover:bg-slate-50 transition";
+
+    const numberCell = document.createElement("td");
+    numberCell.className = "p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1";
+    numberCell.textContent = index + 1;
+    row.appendChild(numberCell);
+
+    const nameCell = document.createElement("td");
+    nameCell.className = "p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2";
+    nameCell.textContent = student.name;
+    row.appendChild(nameCell);
+
+    filteredDates.forEach(date => {
+      const cell = document.createElement("td");
+      cell.className = "p-2 border-r border-slate-200 text-center";
+
+      const status = attendance[currentTab][student.id + "_" + date] || "";
+      const button = document.createElement("button");
+
+      button.className = "w-full h-9 rounded transition text-xs font-bold cursor-pointer";
+
+      if (status === "P") {
+        button.classList.add("bg-emerald-500", "text-white", "hover:bg-emerald-600");
+      } else if (status === "A") {
+        button.classList.add("bg-rose-500", "text-white", "hover:bg-rose-600");
+      } else {
+        button.classList.add("bg-slate-50", "text-slate-400", "hover:bg-slate-100");
       }
-      if (!confirm("Restoring will replace current data. Continue?")) return;
 
-      students = data.students;
-      dates = normalizeDates(data.dates);
+      button.textContent = status || "-";
+      button.onclick = () => toggleAttendance(student.id, date);
+
+      cell.appendChild(button);
+      row.appendChild(cell);
+    });
+
+    const percentageCell = document.createElement("td");
+    percentageCell.className = "p-3 border-l border-slate-200 bg-slate-50 text-center";
+
+    const percentage = calculatePercentage(currentTab, student.id);
+    const badge = document.createElement("span");
+    badge.className = "bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs";
+    badge.textContent = percentage === null ? "—" : percentage + "%";
+
+    percentageCell.appendChild(badge);
+    row.appendChild(percentageCell);
+
+    const actionCell = document.createElement("td");
+    actionCell.className = "p-3 text-center";
+
+    const deleteStudentButton = document.createElement("button");
+    deleteStudentButton.className = "text-slate-400 hover:text-red-600 text-xs cursor-pointer";
+    deleteStudentButton.textContent = "Delete";
+    deleteStudentButton.onclick = () => deleteStudent(student.id);
+
+    actionCell.appendChild(deleteStudentButton);
+    row.appendChild(actionCell);
+
+    rowsContainer.appendChild(row);
+  });
+
+  document.getElementById("stat-cadets").textContent = students.length;
+  document.getElementById("stat-parades").textContent = dates.parades.length;
+  document.getElementById("stat-events").textContent = dates.events.length;
+  document.getElementById("stat-officials").textContent = dates.officials.length;
+}
+
+render();
+</script>
+
+</body>
+</html>
