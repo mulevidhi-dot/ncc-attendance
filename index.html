@@ -241,8 +241,12 @@ function normalizeStudents(value) {
       result[category] = value[category]
         .filter(s => s && s.id !== undefined && typeof s.name === "string")
         .map(s => ({ id: String(s.id), name: s.name }));
+    } else if (value && Array.isArray(value) && category === "parades") {
+      // Handle migration if old flat array was stored
+      result[category] = value
+        .filter(s => s && s.id !== undefined && typeof s.name === "string")
+        .map(s => ({ id: String(s.id), name: s.name }));
     } else {
-      // Default fallback per category if migrating old flat data
       result[category] = [
         { id: "1", name: "Ansh" },
         { id: "2", name: "Pawan" },
@@ -355,14 +359,8 @@ function deleteStudent(id) {
 }
 
 function addDate() {
-  const today = new Date();
-  const localToday = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0")
-  ].join("-");
-
-  const input = prompt("Enter date (YYYY-MM-DD):", localToday);
+  // Pass an empty string so the browser prompt opens completely blank
+  const input = prompt("Enter date (YYYY-MM-DD):", "");
   if (input === null) return;
 
   const date = input.trim();
