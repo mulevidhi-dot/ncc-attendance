@@ -52,7 +52,7 @@
 
       <div class="flex flex-wrap gap-2">
         <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-          + Add  Name
+          + Add Cadet Name
         </button>
         <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition" id="btn-add-date">
           + Add Date
@@ -96,8 +96,19 @@
       </button>
     </div>
 
+    <!-- Filter Bar (Month Selector) -->
+    <div class="bg-white rounded-none shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Dates by Month:</label>
+        <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
+          <option value="all">Show All Dates</option>
+        </select>
+      </div>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all dates.</p>
+    </div>
+
     <!-- Active Table View Container -->
-    <div class="bg-white rounded-b-xl rounded-t-none shadow-sm border border-slate-200 p-6 space-y-4">
+    <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
         <h2 id="section-title" class="text-lg font-bold text-slate-900">Parade Attendance Register</h2>
         <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Viewing Parades</span>
@@ -250,8 +261,59 @@
       link.click();
     }
 
+    function getAvailableMonths() {
+      const months = new Set();
+      dates[currentTab].forEach(d => {
+        months.add(d.substring(0, 7)); // YYYY-MM
+      });
+      return Array.from(months).sort();
+    }
+
+    function formatMonthYear(ymString) {
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const parts = ymString.split('-');
+      return `${months[parseInt(parts[1]) - 1]} ${parts[0]}`;
+    }
+
+    function updateFilterDropdown() {
+      const dropdown = document.getElementById('date-filter');
+      if (!dropdown) return;
+
+      const currentValue = dropdown.value;
+      const availableMonths = getAvailableMonths();
+
+      dropdown.innerHTML = '<option value="all">Show All Dates</option>';
+
+      availableMonths.forEach(ym => {
+        const option = document.createElement('option');
+        option.value = ym;
+        option.innerText = formatMonthYear(ym);
+        dropdown.appendChild(option);
+      });
+
+      if (currentValue && [...dropdown.options].some(o => o.value === currentValue)) {
+        dropdown.value = currentValue;
+      } else {
+        dropdown.value = 'all';
+      }
+    }
+
     function render() {
-      const catDates = dates[currentTab];
+      updateFilterDropdown();
+
+      const filterElement = document.getElementById('date-filter');
+      const selectedFilter = filterElement ? filterElement.value : 'all';
+      let catDates = dates[currentTab];
+      let filteredDates = [];
+
+      if (selectedFilter === 'all') {
+        filteredDates = catDates;
+        document.getElementById('filter-status').innerText = `Showing all ${catDates.length} dates.`;
+      } else {
+        filteredDates = catDates.filter(d => d.startsWith(selectedFilter));
+        const monthName = formatMonthYear(selectedFilter);
+        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${catDates.length} total dates in ${monthName}.`;
+      }
       
       // Update UI Header Texts
       const titles = { parades: 'Parade Attendance Register', events: 'Event Attendance Register', officials: 'Official Duties Attendance Register' };
@@ -266,7 +328,7 @@
 
       // Build Table Headers
       const headerRow = document.getElementById('table-header-row');
-      let dateHeadersHTML = catDates.map(d => `
+      let dateHeadersHTML = filteredDates.map(d => `
         <th class="p-3 border-r border-slate-200 min-w-[130px] text-center">
           <div class="flex items-center justify-between gap-2">
             <span>${d}</span>
@@ -288,7 +350,7 @@
       rowsContainer.innerHTML = students.map((student, index) => {
         const pct = calculatePercentage(currentTab, student.id);
 
-        const dateCells = catDates.map(d => {
+        const dateCells = filteredDates.map(d => {
           const status = (attendance[currentTab] && attendance[currentTab][`${student.id}_${d}`]) || '';
           let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
           if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
