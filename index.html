@@ -75,7 +75,7 @@
         + Add Cadet Name
       </button>
 
-      <button onclick="addDate()" id="btn-add-date"
+      <button onclick="openDateModal()" id="btn-add-date"
         class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
         + Add Date
       </button>
@@ -83,6 +83,11 @@
       <button onclick="exportToCSV()"
         class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
         Export CSV
+      </button>
+
+      <button onclick="resetAppCache()"
+        class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium cursor-pointer" title="Reset Storage">
+        🔄 Reset Storage
       </button>
     </div>
   </header>
@@ -193,6 +198,19 @@
 
 </div>
 
+<!-- Date Picker Modal -->
+<div id="date-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+    <h3 id="modal-title" class="text-lg font-bold text-slate-900">Add New Date</h3>
+    <p class="text-sm text-slate-500">Select or enter the date for this record:</p>
+    <input type="date" id="modal-date-input" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
+    <div class="flex justify-end gap-3 pt-2">
+      <button onclick="closeDateModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
+      <button onclick="confirmAddDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">Add Date</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 
@@ -229,9 +247,17 @@ function readJSON(key, fallback) {
     const value = localStorage.getItem(key);
     return value === null ? fallback : JSON.parse(value);
   } catch (error) {
-    console.error("Could not read saved data:", key, error);
     return fallback;
   }
+}
+
+// Force clean storage version check to start completely empty
+const STORAGE_VERSION = "v4_zero_defaults";
+if (localStorage.getItem("ncc_version") !== STORAGE_VERSION) {
+  localStorage.removeItem("ncc_students");
+  localStorage.removeItem("ncc_dates");
+  localStorage.removeItem("ncc_attendance");
+  localStorage.setItem("ncc_version", STORAGE_VERSION);
 }
 
 function normalizeStudents(value) {
@@ -241,17 +267,8 @@ function normalizeStudents(value) {
       result[category] = value[category]
         .filter(s => s && s.id !== undefined && typeof s.name === "string")
         .map(s => ({ id: String(s.id), name: s.name }));
-    } else if (value && Array.isArray(value) && category === "parades") {
-      // Handle migration if old flat array was stored
-      result[category] = value
-        .filter(s => s && s.id !== undefined && typeof s.name === "string")
-        .map(s => ({ id: String(s.id), name: s.name }));
     } else {
-      result[category] = [
-        { id: "1", name: "Ansh" },
-        { id: "2", name: "Pawan" },
-        { id: "3", name: "Pranav" }
-      ];
+      result[category] = []; // Zero default names
     }
   });
   return result;
@@ -262,7 +279,7 @@ function normalizeDates(value) {
   CATEGORIES.forEach(category => {
     result[category] = Array.isArray(value?.[category])
       ? [...new Set(value[category].filter(isValidDate))].sort()
-      : [];
+      : []; // Zero default dates
   });
   return result;
 }
@@ -284,16 +301,8 @@ function normalizeAttendance(value) {
 }
 
 let students = normalizeStudents(readJSON("ncc_students", null));
-let dates = normalizeDates(readJSON("ncc_dates", {
-  parades: ["2026-05-19", "2026-05-26"],
-  events: ["2026-06-01"],
-  officials: ["2026-06-10"]
-}));
-let attendance = normalizeAttendance(readJSON("ncc_attendance", {
-  parades: { "1_2026-05-19": "P", "2_2026-05-19": "P" },
-  events: { "1_2026-06-01": "P" },
-  officials: { "1_2026-06-10": "P" }
-}));
+let dates = normalizeDates(readJSON("ncc_dates", null));
+let attendance = normalizeAttendance(readJSON("ncc_attendance", null));
 
 function isValidDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}\$/.test(value)) return false;
@@ -309,7 +318,13 @@ function saveData() {
     render();
   } catch (error) {
     alert("Could not save data. Your browser storage may be full.");
-    console.error(error);
+  }
+}
+
+function resetAppCache() {
+  if (confirm("Clear all data and reset everything to completely empty?")) {
+    localStorage.clear();
+    location.reload();
   }
 }
 
@@ -358,14 +373,36 @@ function deleteStudent(id) {
   saveData();
 }
 
-function addDate() {
-  // Pass an empty string so the browser prompt opens completely blank
-  const input = prompt("Enter date (YYYY-MM-DD):", "");
-  if (input === null) return;
+function openDateModal() {
+  const modal = document.getElementById("date-modal");
+  const title = document.getElementById("modal-title");
+  const input = document.getElementById("modal-date-input");
+
+  title.textContent = "Add New " + currentTab.slice(0, -1).charAt(0).toUpperCase() + currentTab.slice(1, -1) + " Date";
+  
+  const today = new Date().toISOString().split('T')[0];
+  input.value = today;
+
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+function closeDateModal() {
+  const modal = document.getElementById("date-modal");
+  modal.classList.remove("flex");
+  modal.classList.add("hidden");
+}
+
+function confirmAddDate() {
+  const input = document.getElementById("modal-date-input").value;
+  if (!input) {
+    alert("Please select a valid date.");
+    return;
+  }
 
   const date = input.trim();
   if (!isValidDate(date)) {
-    alert("Please enter a valid date in YYYY-MM-DD format.");
+    alert("Please select a valid date.");
     return;
   }
 
@@ -377,6 +414,7 @@ function addDate() {
   dates[currentTab].push(date);
   dates[currentTab].sort();
 
+  closeDateModal();
   saveData();
 }
 
@@ -560,68 +598,72 @@ function render() {
   const rowsContainer = document.getElementById("student-rows");
   rowsContainer.innerHTML = "";
 
-  catStudents.forEach((student, index) => {
-    const row = document.createElement("tr");
-    row.className = "hover:bg-slate-50 transition";
+  if (catStudents.length === 0) {
+    rowsContainer.innerHTML = `<tr><td colspan="${filteredDates.length + 3}" class="text-center p-6 text-slate-400">No cadets found in this tab. Click "+ Add Cadet Name" to begin.</td></tr>`;
+  } else {
+    catStudents.forEach((student, index) => {
+      const row = document.createElement("tr");
+      row.className = "hover:bg-slate-50 transition";
 
-    const numberCell = document.createElement("td");
-    numberCell.className = "p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1";
-    numberCell.textContent = index + 1;
-    row.appendChild(numberCell);
+      const numberCell = document.createElement("td");
+      numberCell.className = "p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1";
+      numberCell.textContent = index + 1;
+      row.appendChild(numberCell);
 
-    const nameCell = document.createElement("td");
-    nameCell.className = "p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2";
-    nameCell.textContent = student.name;
-    row.appendChild(nameCell);
+      const nameCell = document.createElement("td");
+      nameCell.className = "p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2";
+      nameCell.textContent = student.name;
+      row.appendChild(nameCell);
 
-    filteredDates.forEach(date => {
-      const cell = document.createElement("td");
-      cell.className = "p-2 border-r border-slate-200 text-center";
+      filteredDates.forEach(date => {
+        const cell = document.createElement("td");
+        cell.className = "p-2 border-r border-slate-200 text-center";
 
-      const status = attendance[currentTab][student.id + "_" + date] || "";
-      const button = document.createElement("button");
+        const status = attendance[currentTab][student.id + "_" + date] || "";
+        const button = document.createElement("button");
 
-      button.className = "w-full h-9 rounded transition text-xs font-bold cursor-pointer";
+        button.className = "w-full h-9 rounded transition text-xs font-bold cursor-pointer";
 
-      if (status === "P") {
-        button.classList.add("bg-emerald-500", "text-white", "hover:bg-emerald-600");
-      } else if (status === "A") {
-        button.classList.add("bg-rose-500", "text-white", "hover:bg-rose-600");
-      } else {
-        button.classList.add("bg-slate-50", "text-slate-400", "hover:bg-slate-100");
-      }
+        if (status === "P") {
+          button.classList.add("bg-emerald-500", "text-white", "hover:bg-emerald-600");
+        } else if (status === "A") {
+          button.classList.add("bg-rose-500", "text-white", "hover:bg-rose-600");
+        } else {
+          button.classList.add("bg-slate-50", "text-slate-400", "hover:bg-slate-100");
+        }
 
-      button.textContent = status || "-";
-      button.onclick = () => toggleAttendance(student.id, date);
+        button.textContent = status || "-";
+        button.onclick = () => toggleAttendance(student.id, date);
 
-      cell.appendChild(button);
-      row.appendChild(cell);
+        cell.appendChild(button);
+        row.appendChild(cell);
+      });
+
+      const percentageCell = document.createElement("td");
+      percentageCell.className = "p-3 border-l border-slate-200 bg-slate-50 text-center";
+
+      const percentage = calculatePercentage(currentTab, student.id);
+      const badge = document.createElement("span");
+      badge.className = "bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs";
+      badge.textContent = percentage === null ? "—" : percentage + "%";
+
+      percentageCell.appendChild(badge);
+      row.appendChild(percentageCell);
+
+      const actionCell = document.createElement("td");
+      actionCell.className = "p-3 text-center";
+
+      const deleteStudentButton = document.createElement("button");
+      deleteStudentButton.className = "text-slate-400 hover:text-red-600 text-xs cursor-pointer";
+      deleteStudentButton.textContent = "Delete";
+      deleteStudentButton.onclick = () => deleteStudent(student.id);
+
+      actionCell.appendChild(deleteStudentButton);
+      row.appendChild(actionCell);
+
+      rowsContainer.appendChild(row);
     });
-
-    const percentageCell = document.createElement("td");
-    percentageCell.className = "p-3 border-l border-slate-200 bg-slate-50 text-center";
-
-    const percentage = calculatePercentage(currentTab, student.id);
-    const badge = document.createElement("span");
-    badge.className = "bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs";
-    badge.textContent = percentage === null ? "—" : percentage + "%";
-
-    percentageCell.appendChild(badge);
-    row.appendChild(percentageCell);
-
-    const actionCell = document.createElement("td");
-    actionCell.className = "p-3 text-center";
-
-    const deleteStudentButton = document.createElement("button");
-    deleteStudentButton.className = "text-slate-400 hover:text-red-600 text-xs cursor-pointer";
-    deleteStudentButton.textContent = "Delete";
-    deleteStudentButton.onclick = () => deleteStudent(student.id);
-
-    actionCell.appendChild(deleteStudentButton);
-    row.appendChild(actionCell);
-
-    rowsContainer.appendChild(row);
-  });
+  }
 
   document.getElementById("stat-cadets").textContent = catStudents.length;
   document.getElementById("stat-parades").textContent = dates.parades.length;
