@@ -202,7 +202,7 @@
 <div id="date-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
   <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
     <h3 id="modal-title" class="text-lg font-bold text-slate-900">Add New Date</h3>
-    <p class="text-sm text-slate-500">Select or enter the date for this record:</p>
+    <p class="text-sm text-slate-500">Select the date for this record:</p>
     <input type="date" id="modal-date-input" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
     <div class="flex justify-end gap-3 pt-2">
       <button onclick="closeDateModal()" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 cursor-pointer">Cancel</button>
@@ -251,15 +251,6 @@ function readJSON(key, fallback) {
   }
 }
 
-// Force clean storage version check to start completely empty
-const STORAGE_VERSION = "v4_zero_defaults";
-if (localStorage.getItem("ncc_version") !== STORAGE_VERSION) {
-  localStorage.removeItem("ncc_students");
-  localStorage.removeItem("ncc_dates");
-  localStorage.removeItem("ncc_attendance");
-  localStorage.setItem("ncc_version", STORAGE_VERSION);
-}
-
 function normalizeStudents(value) {
   const result = {};
   CATEGORIES.forEach(category => {
@@ -268,7 +259,7 @@ function normalizeStudents(value) {
         .filter(s => s && s.id !== undefined && typeof s.name === "string")
         .map(s => ({ id: String(s.id), name: s.name }));
     } else {
-      result[category] = []; // Zero default names
+      result[category] = [];
     }
   });
   return result;
@@ -278,8 +269,8 @@ function normalizeDates(value) {
   const result = {};
   CATEGORIES.forEach(category => {
     result[category] = Array.isArray(value?.[category])
-      ? [...new Set(value[category].filter(isValidDate))].sort()
-      : []; // Zero default dates
+      ? [...new Set(value[category])].sort()
+      : [];
   });
   return result;
 }
@@ -303,12 +294,6 @@ function normalizeAttendance(value) {
 let students = normalizeStudents(readJSON("ncc_students", null));
 let dates = normalizeDates(readJSON("ncc_dates", null));
 let attendance = normalizeAttendance(readJSON("ncc_attendance", null));
-
-function isValidDate(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}\$/.test(value)) return false;
-  const date = new Date(value + "T00:00:00");
-  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
 
 function saveData() {
   try {
@@ -396,16 +381,11 @@ function closeDateModal() {
 function confirmAddDate() {
   const input = document.getElementById("modal-date-input").value;
   if (!input) {
-    alert("Please select a valid date.");
+    alert("Please select a date.");
     return;
   }
 
   const date = input.trim();
-  if (!isValidDate(date)) {
-    alert("Please select a valid date.");
-    return;
-  }
-
   if (dates[currentTab].includes(date)) {
     alert("This date already exists in this tab.");
     return;
