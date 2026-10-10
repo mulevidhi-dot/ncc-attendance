@@ -2,491 +2,427 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NCC Attendance Register</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    .tab-active { background: #166534; color: white; }
-    .attendance-btn { min-width: 42px; padding: 6px 10px; border-radius: 6px; font-weight: bold; }
-    .present { background: #bbf7d0; color: #166534; }
-    .absent { background: #fecaca; color: #991b1b; }
-    .unset { background: #e5e7eb; color: #374151; }
-    th, td { padding: 9px; border: 1px solid #d1d5db; text-align: center; }
-    th { background: #f3f4f6; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NCC Battalion Attendance Register</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#1e293b;background:#f1f5f9}*{box-sizing:border-box}body{margin:0;padding:18px}.wrap{max-width:1500px;margin:auto;display:grid;gap:16px}.panel{background:#fff;border:1px solid #dbe2ea;border-radius:14px;padding:18px;box-shadow:0 2px 5px #0f172a0a}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}h1{font-size:clamp(21px,3vw,29px);margin:0 0 8px;color:#0f172a}p{margin:4px 0;color:#64748b;font-size:14px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px}.actions,.tabs,.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}button,select,input{font:inherit}button{border:0;border-radius:8px;padding:10px 13px;cursor:pointer;font-size:14px;font-weight:600}button:focus,input:focus,select:focus{outline:2px solid #93c5fd;outline-offset:2px}.dark{background:#0f172a;color:white}.blue{background:#2563eb;color:white}.green{background:#047857;color:white}.danger{background:#fee2e2;color:#b91c1c}button:hover{filter:brightness(.96)}.tab{background:#e2e8f0;color:#334155}.tab.active{background:#1d4ed8;color:white}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.stat-label{font-size:12px;color:#64748b;text-transform:uppercase;font-weight:bold;letter-spacing:.07em}.stat-value{font-size:26px;font-weight:bold;margin-top:6px}.filters{justify-content:space-between}label{font-size:14px;font-weight:600;color:#475569}select,input{border:1px solid #cbd5e1;border-radius:8px;padding:9px;background:white;color:#1e293b}.table-wrap{overflow:auto;max-width:100%;border:1px solid #e2e8f0;border-radius:10px}table{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content;text-align:left}th,td{padding:10px;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;white-space:nowrap}th{background:#f8fafc;color:#475569;font-size:12px;position:relative}tbody tr:last-child td{border-bottom:0}th:last-child,td:last-child{border-right:0}.sticky1{position:sticky;left:0;z-index:3;background:#fff;min-width:48px;text-align:center}.sticky2{position:sticky;left:48px;z-index:3;background:#fff;min-width:190px}th.sticky1,th.sticky2{background:#f8fafc;z-index:5}.datehead{min-width:125px;text-align:center}.date-line{display:flex;gap:8px;align-items:center;justify-content:center}.weight{display:block;font-size:11px;font-weight:normal;color:#64748b;margin-top:4px}.cell-btn{width:100%;min-width:70px;height:36px;padding:6px}.present{background:#10b981;color:#fff}.absent{background:#f43f5e;color:#fff}.unmarked{background:#f1f5f9;color:#64748b}.pct{display:inline-block;background:#e2e8f0;padding:6px 10px;border-radius:20px;font-size:12px;font-weight:bold}.small{font-size:12px;padding:6px 8px}.status{font-size:13px;color:#64748b}.empty{padding:24px;text-align:center;color:#64748b}.note{font-size:13px;line-height:1.5;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;color:#1e40af}@media(max-width:650px){body{padding:9px}.panel{padding:12px}.stats{grid-template-columns:1fr 1fr}.stat-value{font-size:22px}.actions button{flex:1}}
+</style>
 </head>
-<body class="bg-gray-100 min-h-screen text-gray-800">
-  <header class="bg-green-800 text-white p-5">
-    <h1 class="text-2xl font-bold">NCC Attendance Register</h1>
-    <p class="mt-1 text-sm">Cadet attendance management system</p>
-  </header>
+<body>
+<div class="wrap">
+<header class="panel top">
+<div>
+<div><span class="dot" style="background:#dc2626"></span><span class="dot" style="background:#1e3a8a"></span><span class="dot" style="background:#38bdf8"></span></div>
+<h1>NCC Candidate Attendance Register</h1>
+<p>Offline register · Click a cell to cycle Present (P) → Absent (A) → Unmarked (–)</p>
+</div>
+<div class="actions">
+<button class="dark" onclick="addStudent()">+ Add Cadet</button>
+<button class="blue" onclick="addActivityDate()">+ Add Date / Activity</button>
+<button class="green" onclick="exportCSV()">📥 Export Excel CSV</button>
+</div>
+</header>
 
-  <main class="max-w-7xl mx-auto p-4 space-y-5">
-    <section class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-bold mb-3">Select Register</h2>
-      <div class="flex flex-wrap gap-2">
-        <button class="tab-active px-4 py-2 rounded-lg" data-tab="Parades" onclick="switchTab('Parades')">Parades</button>
-        <button class="px-4 py-2 rounded-lg bg-gray-200" data-tab="Events" onclick="switchTab('Events')">Events</button>
-        <button class="px-4 py-2 rounded-lg bg-gray-200" data-tab="Officials" onclick="switchTab('Officials')">Officials</button>
-      </div>
-    </section>
+<section class="panel">
+<div class="tabs">
+<button class="tab active" data-category="parades" onclick="changeCategory('parades')">Parades</button>
+<button class="tab" data-category="events" onclick="changeCategory('events')">Events</button>
+<button class="tab" data-category="officials" onclick="changeCategory('officials')">Officials</button>
+</div>
+<p style="margin-top:10px">Each category has its own dates and attendance. Set a weightage for each date/activity when adding it; percentage uses the weightage of marked P/A entries.</p>
+</section>
 
-    <section class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-bold mb-3">Manage Cadets / Officials</h2>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input id="studentName" class="border rounded-lg p-2 flex-1" placeholder="Enter full name">
-        <input id="studentNumber" class="border rounded-lg p-2 sm:w-48" placeholder="Roll / NCC number">
-        <button onclick="addStudent()" class="bg-green-700 hover:bg-green-800 text-white rounded-lg px-4 py-2">Add Person</button>
-      </div>
-      <p class="text-sm text-gray-500 mt-2">Choose a tab above to manage people for that register.</p>
-      <div id="studentList" class="mt-4 space-y-2"></div>
-    </section>
+<section class="stats">
+<div class="panel"><div class="stat-label">Total Cadets</div><div id="stat-cadets" class="stat-value">0</div></div>
+<div class="panel"><div id="stat-activity-label" class="stat-label">Parade Dates</div><div id="stat-activities" class="stat-value">0</div></div>
+<div class="panel"><div class="stat-label">Average Attendance</div><div id="stat-average" class="stat-value">0%</div></div>
+</section>
 
-    <section class="bg-white rounded-xl shadow p-4">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <div>
-          <h2 class="text-lg font-bold">Attendance</h2>
-          <p id="registerTitle" class="text-sm text-gray-500">Parades Register</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button onclick="addDate()" class="bg-green-700 text-white rounded-lg px-4 py-2">Add Date</button>
-          <button onclick="exportCSV()" class="bg-blue-700 text-white rounded-lg px-4 py-2">Export CSV</button>
-        </div>
-      </div>
+<section class="panel filters">
+<div class="filters">
+<label for="date-filter">Filter by month:</label>
+<select id="date-filter" onchange="render()"><option value="all">Show all dates</option></select>
+</div>
+<div class="status" id="filter-status">Showing all dates.</div>
+</section>
 
-      <div class="mt-4 flex flex-wrap items-center gap-3">
-        <label for="monthFilter" class="font-semibold">Filter month:</label>
-        <select id="monthFilter" onchange="renderAttendance()" class="border rounded-lg p-2">
-          <option value="all">All months</option>
-        </select>
-        <span class="text-sm text-gray-500">Click a status to cycle: Not marked → Present → Absent → Not marked.</span>
-      </div>
+<section class="panel">
+<div class="table-wrap">
+<table>
+<thead><tr id="table-header-row"></tr></thead>
+<tbody id="student-rows"></tbody>
+</table>
+</div>
+</section>
 
-      <div id="attendanceTable" class="mt-4 overflow-x-auto"></div>
-    </section>
-
-    <section class="bg-white rounded-xl shadow p-4">
-      <h2 class="text-lg font-bold mb-3">Attendance Summary</h2>
-      <div id="summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
-    </section>
-    <p class="text-xs text-gray-500">Data is saved in this browser on this device. It does not automatically sync to another computer. Tailwind styling requires an internet connection.</p>
-  </main>
+<div class="note"><strong>Offline register:</strong> Attendance is saved in this browser on this laptop. CSV opens in Excel. Data does not automatically sync to another laptop.</div>
+</div>
 
 <script>
-const TABS = ["Parades", "Events", "Officials"];
+const STORAGE_KEY='ncc_attendance_register_v2';
+const CATEGORIES=['parades','events','officials'];
+const CATEGORY_LABELS={parades:'Parades',events:'Events',officials:'Officials'};
+let currentCategory='parades';
 
-let currentTab = "Parades";
-let students = loadData("ncc_students", { Parades: [], Events: [], Officials: [] });
-let dates = loadData("ncc_dates", { Parades: [], Events: [], Officials: [] });
-let attendance = loadData("ncc_attendance", { Parades: {}, Events: {}, Officials: {} });
-let weights = loadData("ncc_weights", { Parades: {}, Events: {}, Officials: {} });
-
-function loadData(key, fallback) {
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? { ...fallback, ...JSON.parse(saved) } : fallback;
-  } catch {
-    return fallback;
-  }
+function emptyState(){
+ return {students:[],categories:{
+  parades:{dates:[],attendance:{}},
+  events:{dates:[],attendance:{}},
+  officials:{dates:[],attendance:{}}
+ }};
 }
 
-function saveData() {
-  localStorage.setItem("ncc_students", JSON.stringify(students));
-  localStorage.setItem("ncc_dates", JSON.stringify(dates));
-  localStorage.setItem("ncc_attendance", JSON.stringify(attendance));
-  localStorage.setItem("ncc_weights", JSON.stringify(weights));
+function readOld(key,fallback){
+ try{
+  const value=localStorage.getItem(key);
+  return value?JSON.parse(value):fallback;
+ }catch(_){return fallback;}
 }
 
-function ensureTabData() {
-  TABS.forEach(tab => {
-    if (!Array.isArray(students[tab])) students[tab] = [];
-    if (!Array.isArray(dates[tab])) dates[tab] = [];
-    if (!attendance[tab] || typeof attendance[tab] !== "object") attendance[tab] = {};
-    if (!weights[tab] || typeof weights[tab] !== "object") weights[tab] = {};
-  });
-}
-ensureTabData();
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.querySelectorAll("[data-tab]").forEach(button => {
-    const active = button.dataset.tab === tab;
-    button.className = active
-      ? "tab-active px-4 py-2 rounded-lg"
-      : "px-4 py-2 rounded-lg bg-gray-200";
-  });
-  document.getElementById("registerTitle").textContent = tab + " Register";
-  renderAll();
-}
-
-function addStudent() {
-  const nameInput = document.getElementById("studentName");
-  const numberInput = document.getElementById("studentNumber");
-  const name = nameInput.value.trim();
-  const number = numberInput.value.trim();
-
-  if (!name) {
-    alert("Please enter the person's name.");
-    nameInput.focus();
-    return;
-  }
-
-  students[currentTab].push({
-    id: Date.now().toString() + Math.random().toString(16).slice(2),
-    name,
-    number
-  });
-
-  nameInput.value = "";
-  numberInput.value = "";
-  saveData();
-  renderAll();
-}
-
-function deleteStudent(id) {
-  const person = students[currentTab].find(s => s.id === id);
-  if (!person) return;
-  if (!confirm("Delete " + person.name + "? Their attendance records will also be removed.")) return;
-
-  students[currentTab] = students[currentTab].filter(s => s.id !== id);
-  dates[currentTab].forEach(date => {
-    if (attendance[currentTab][date]) delete attendance[currentTab][date][id];
-  });
-
-  saveData();
-  renderAll();
-}
-
-function renderStudents() {
-  const container = document.getElementById("studentList");
-  const list = students[currentTab];
-
-  if (!list.length) {
-    container.innerHTML = '<p class="text-gray-500 text-sm">No people added yet.</p>';
-    return;
-  }
-
-  container.innerHTML = list.map(person => `
-    <div class="flex flex-wrap justify-between items-center gap-2 border rounded-lg p-3">
-      <div>
-        <span class="font-semibold">${escapeHTML(person.name)}</span>
-        ${person.number ? `<span class="text-gray-500 text-sm ml-2">(${escapeHTML(person.number)})</span>` : ""}
-      </div>
-      <button class="text-red-700 hover:underline" onclick="deleteStudent('${person.id}')">Delete</button>
-    </div>
-  `).join("");
-}
-
-/* Strict YYYY-MM-DD validation that also handles leap years and invalid dates. */
-function isValidDate(value) {
-  if (typeof value !== "string") return false;
-
-  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return false;
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-
-  const date = new Date(0);
-  date.setFullYear(year, month - 1, day);
-  date.setHours(12, 0, 0, 0);
-
-  return date.getFullYear() === year &&
-         date.getMonth() === month - 1 &&
-         date.getDate() === day;
-}
-
-function localDateString(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function addDate() {
-  const input = prompt(
-    "Enter date in YYYY-MM-DD format (example: 2026-10-10):",
-    localDateString(new Date())
-  );
-
-  if (input === null) return;
-
-  const date = input.trim();
-
-  if (!isValidDate(date)) {
-    alert("Invalid date. Please enter a real date in YYYY-MM-DD format, such as 2026-10-10.");
-    return;
-  }
-
-  if (dates[currentTab].includes(date)) {
-    alert("This date already exists.");
-    return;
-  }
-
-  const weightInput = prompt("Enter weightage for this date (default 1):", "1");
-  if (weightInput === null) return;
-
-  const weight = Number(weightInput.trim());
-
-  if (!Number.isFinite(weight) || weight <= 0) {
-    alert("Weightage must be a number greater than zero.");
-    return;
-  }
-
-  dates[currentTab].push(date);
-  dates[currentTab].sort();
-  weights[currentTab][date] = weight;
-
-  saveData();
-  renderAll();
-}
-
-function deleteDate(date) {
-  if (!confirm("Delete date " + date + " and its attendance records?")) return;
-
-  dates[currentTab] = dates[currentTab].filter(d => d !== date);
-  delete attendance[currentTab][date];
-  delete weights[currentTab][date];
-
-  saveData();
-  renderAll();
-}
-
-function getFilteredDates() {
-  const month = document.getElementById("monthFilter").value;
-  return dates[currentTab]
-    .filter(date => month === "all" || date.startsWith(month))
-    .sort();
-}
-
-function renderMonthFilter() {
-  const select = document.getElementById("monthFilter");
-  const oldValue = select.value || "all";
-  const months = [...new Set(dates[currentTab].map(d => d.slice(0, 7)))].sort();
-
-  select.innerHTML = '<option value="all">All months</option>' +
-    months.map(month => `<option value="${month}">${month}</option>`).join("");
-
-  select.value = months.includes(oldValue) ? oldValue : "all";
-}
-
-function cycleAttendance(studentId, date) {
-  if (!attendance[currentTab][date]) attendance[currentTab][date] = {};
-
-  const current = attendance[currentTab][date][studentId] || "-";
-  const next = current === "-" ? "P" : current === "P" ? "A" : "-";
-
-  if (next === "-") {
-    delete attendance[currentTab][date][studentId];
-  } else {
-    attendance[currentTab][date][studentId] = next;
-  }
-
-  saveData();
-  renderAll();
-}
-
-function statusButton(studentId, date) {
-  const status = attendance[currentTab][date]?.[studentId] || "-";
-  const css = status === "P" ? "present" : status === "A" ? "absent" : "unset";
-
-  return `<button class="attendance-btn ${css}"
-    title="Click to change attendance"
-    onclick="cycleAttendance('${studentId}', '${date}')">${status}</button>`;
-}
-
-function renderAttendance() {
-  renderMonthFilter();
-
-  const container = document.getElementById("attendanceTable");
-  const list = students[currentTab];
-  const filteredDates = getFilteredDates();
-
-  if (!list.length) {
-    container.innerHTML = '<p class="text-gray-500 p-3">Add people to begin recording attendance.</p>';
-    renderSummary();
-    return;
-  }
-
-  if (!filteredDates.length) {
-    container.innerHTML = '<p class="text-gray-500 p-3">No dates found for this filter. Click Add Date to begin.</p>';
-    renderSummary();
-    return;
-  }
-
-  let html = '<table class="w-full text-sm border-collapse"><thead><tr>';
-  html += '<th>Name / Roll No.</th>';
-
-  filteredDates.forEach(date => {
-    html += `<th>
-      <div>${escapeHTML(date)}</div>
-      <div class="text-xs font-normal text-gray-500">Weight: ${Number(weights[currentTab][date] || 1)}</div>
-      <button class="text-red-600 text-xs mt-1" onclick="deleteDate('${date}')">Delete</button>
-    </th>`;
-  });
-
-  html += '<th>Present</th><th>Absent</th><th>Attendance %</th></tr></thead><tbody>';
-
-  list.forEach(person => {
-    let presentWeight = 0;
-    let absentWeight = 0;
-    let markedWeight = 0;
-    let totalWeight = 0;
-
-    filteredDates.forEach(date => {
-      const weight = Number(weights[currentTab][date] || 1);
-      totalWeight += weight;
-
-      const status = attendance[currentTab][date]?.[person.id] || "-";
-      if (status === "P") {
-        presentWeight += weight;
-        markedWeight += weight;
-      } else if (status === "A") {
-        absentWeight += weight;
-        markedWeight += weight;
-      }
+function loadState(){
+ try{
+  const saved=localStorage.getItem(STORAGE_KEY);
+  if(saved){
+   const parsed=JSON.parse(saved);
+   if(parsed.students&&parsed.categories){
+    CATEGORIES.forEach(cat=>{
+     if(!parsed.categories[cat])parsed.categories[cat]={dates:[],attendance:{}};
+     if(!Array.isArray(parsed.categories[cat].dates))parsed.categories[cat].dates=[];
+     if(!parsed.categories[cat].attendance)parsed.categories[cat].attendance={};
     });
-
-    const percentage = totalWeight > 0 ? (presentWeight / totalWeight) * 100 : 0;
-
-    html += `<tr>
-      <td class="text-left">
-        <div class="font-semibold">${escapeHTML(person.name)}</div>
-        <div class="text-xs text-gray-500">${escapeHTML(person.number || "")}</div>
-      </td>`;
-
-    filteredDates.forEach(date => {
-      html += `<td>${statusButton(person.id, date)}</td>`;
-    });
-
-    html += `<td>${presentWeight}</td>
-      <td>${absentWeight}</td>
-      <td class="font-bold">${percentage.toFixed(1)}%</td>
-    </tr>`;
-  });
-
-  html += '</tbody></table>';
-  container.innerHTML = html;
-  renderSummary();
-}
-
-function renderSummary() {
-  const container = document.getElementById("summary");
-  const list = students[currentTab];
-  const filteredDates = getFilteredDates();
-
-  let totalPresent = 0;
-  let totalAbsent = 0;
-  let totalWeight = 0;
-
-  filteredDates.forEach(date => {
-    const weight = Number(weights[currentTab][date] || 1);
-    totalWeight += weight;
-
-    list.forEach(person => {
-      const status = attendance[currentTab][date]?.[person.id] || "-";
-      if (status === "P") totalPresent += weight;
-      if (status === "A") totalAbsent += weight;
-    });
-  });
-
-  const overallPercent = list.length && totalWeight
-    ? (totalPresent / (list.length * totalWeight)) * 100
-    : 0;
-
-  container.innerHTML = `
-    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-      <p class="text-sm text-gray-600">People</p>
-      <p class="text-2xl font-bold">${list.length}</p>
-    </div>
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-      <p class="text-sm text-gray-600">Present (weighted)</p>
-      <p class="text-2xl font-bold">${totalPresent}</p>
-    </div>
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-      <p class="text-sm text-gray-600">Overall Attendance</p>
-      <p class="text-2xl font-bold">${overallPercent.toFixed(1)}%</p>
-    </div>
-  `;
-}
-
-function exportCSV() {
-  const list = students[currentTab];
-  const allDates = dates[currentTab].slice().sort();
-
-  if (!list.length || !allDates.length) {
-    alert("Add people and dates before exporting.");
-    return;
+    return parsed;
+   }
   }
+ }catch(error){console.error('Could not load saved register:',error);}
 
-  const rows = [
-    ["Register", currentTab],
-    ["Name", "Roll / NCC Number", ...allDates, "Present Weight", "Absent Weight", "Attendance %"]
-  ];
+ const oldStudents=readOld('ncc_students',[
+  {id:'1',name:'Ansh'},
+  {id:'2',name:'Pawan'},
+  {id:'3',name:'Pranav'}
+ ]);
+ const oldDates=readOld('ncc_dates',[
+  '2026-05-19','2026-05-26','2026-06-02'
+ ]);
+ const oldAttendance=readOld('ncc_attendance',{
+  '1_2026-05-19':'P','1_2026-05-26':'P','1_2026-06-02':'P',
+  '2_2026-05-19':'P','2_2026-05-26':'A','2_2026-06-02':'P',
+  '3_2026-05-19':'P','3_2026-05-26':'A'
+ });
 
-  list.forEach(person => {
-    let presentWeight = 0;
-    let absentWeight = 0;
-    let totalWeight = 0;
+ const state=emptyState();
+ state.students=oldStudents;
+ state.categories.parades.dates=oldDates.map(d=>
+  typeof d==='string'?{date:d,label:'Parade',weight:1}:d
+ );
+ state.categories.parades.dates.sort((a,b)=>a.date.localeCompare(b.date));
+ state.categories.parades.attendance=oldAttendance;
+ return state;
+}
 
-    const statuses = allDates.map(date => {
-      const status = attendance[currentTab][date]?.[person.id] || "-";
-      const weight = Number(weights[currentTab][date] || 1);
-      totalWeight += weight;
+let state=loadState();
 
-      if (status === "P") presentWeight += weight;
-      if (status === "A") absentWeight += weight;
+function saveState(){
+ try{
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state));
+  localStorage.setItem('ncc_students',JSON.stringify(state.students));
+  localStorage.setItem('ncc_dates',JSON.stringify(state.categories.parades.dates.map(x=>x.date)));
+  localStorage.setItem('ncc_attendance',JSON.stringify(state.categories.parades.attendance));
+  render();
+ }catch(error){
+  alert('The browser could not save the register. Details: '+error.message);
+ }
+}
 
-      return status;
-    });
+function currentData(){return state.categories[currentCategory];}
 
-    const percentage = totalWeight ? (presentWeight / totalWeight) * 100 : 0;
+function newId(){
+ return 'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+}
 
+function changeCategory(category){
+ if(!CATEGORIES.includes(category))return;
+ currentCategory=category;
+ document.querySelectorAll('[data-category]').forEach(b=>
+  b.classList.toggle('active',b.dataset.category===category)
+ );
+ render();
+}
+
+function addStudent(){
+ const name=prompt('Enter cadet name:');
+ if(!name||!name.trim())return;
+ state.students.push({id:newId(),name:name.trim()});
+ saveState();
+}
+
+function deleteStudent(id){
+ const student=state.students.find(s=>s.id===id);
+ if(!student||!confirm(`Delete ${student.name} from the register? Their attendance entries will also be removed.`))return;
+ state.students=state.students.filter(s=>s.id!==id);
+ CATEGORIES.forEach(cat=>{
+  const att=state.categories[cat].attendance;
+  Object.keys(att).forEach(key=>{
+   if(key.startsWith(id+'_'))delete att[key];
+  });
+ });
+ saveState();
+}
+
+function localDateString(){
+ const now=new Date();
+ return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
+/* Date validation fix */
+function isValidDate(value){
+ if(typeof value!=='string')return false;
+ const match=value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ if(!match)return false;
+
+ const year=Number(match[1]);
+ const month=Number(match[2]);
+ const day=Number(match[3]);
+
+ const date=new Date(0);
+ date.setFullYear(year,month-1,day);
+ date.setHours(12,0,0,0);
+
+ return date.getFullYear()===year &&
+        date.getMonth()===month-1 &&
+        date.getDate()===day;
+}
+
+function addActivityDate(){
+ const data=currentData();
+ const entered=prompt(
+  `Enter ${CATEGORY_LABELS[currentCategory]} date (YYYY-MM-DD):`,
+  localDateString()
+ );
+
+ if(entered===null)return;
+ const date=entered.trim();
+
+ if(!isValidDate(date)){
+  alert('Please enter a valid date in YYYY-MM-DD format, for example 2026-10-10.');
+  return;
+ }
+
+ if(data.dates.some(x=>x.date===date)){
+  alert('That date already exists in this category.');
+  return;
+ }
+
+ const defaultLabel=currentCategory==='parades'?'Parade':
+  currentCategory==='events'?'Event':'Official Duty';
+
+ const label=prompt('Activity name (e.g. Parade, Camp, Ceremony):',defaultLabel);
+ if(label===null)return;
+
+ const weightInput=prompt(
+  'Weightage for this date/activity (default 1). Enter a positive number:',
+  '1'
+ );
+ if(weightInput===null)return;
+
+ const weight=Number(weightInput);
+ if(!Number.isFinite(weight)||weight<=0){
+  alert('Weightage must be a number greater than 0.');
+  return;
+ }
+
+ data.dates.push({date,label:label.trim()||defaultLabel,weight});
+ data.dates.sort((a,b)=>a.date.localeCompare(b.date));
+ saveState();
+}
+
+function deleteDate(date){
+ if(!confirm(`Delete ${date} from ${CATEGORY_LABELS[currentCategory]} and remove its attendance?`))return;
+ const data=currentData();
+ data.dates=data.dates.filter(x=>x.date!==date);
+ state.students.forEach(s=>delete data.attendance[`${s.id}_${date}`]);
+ saveState();
+}
+
+function toggleAttendance(studentId,date){
+ const data=currentData();
+ const key=`${studentId}_${date}`;
+ const status=data.attendance[key];
+
+ if(!status)data.attendance[key]='P';
+ else if(status==='P')data.attendance[key]='A';
+ else delete data.attendance[key];
+
+ saveState();
+}
+
+function calculatePercentage(studentId,category=currentCategory){
+ const data=state.categories[category];
+ let presentWeight=0;
+ let markedWeight=0;
+
+ data.dates.forEach(item=>{
+  const status=data.attendance[`${studentId}_${item.date}`];
+  const weight=Number(item.weight)>0?Number(item.weight):1;
+
+  if(status==='P'){
+   presentWeight+=weight;
+   markedWeight+=weight;
+  }else if(status==='A'){
+   markedWeight+=weight;
+  }
+ });
+
+ return markedWeight===0?0:Math.round(presentWeight/markedWeight*100);
+}
+
+function formatMonthYear(value){
+ const [year,month]=value.split('-').map(Number);
+ return new Date(year,month-1,1).toLocaleDateString('en-IN',{
+  month:'long',year:'numeric'
+ });
+}
+
+function updateFilterDropdown(){
+ const dropdown=document.getElementById('date-filter');
+ const oldValue=dropdown.value;
+ const months=[...new Set(currentData().dates.map(x=>x.date.slice(0,7)))].sort();
+
+ dropdown.innerHTML='<option value="all">Show all dates</option>';
+
+ months.forEach(month=>{
+  const option=document.createElement('option');
+  option.value=month;
+  option.textContent=formatMonthYear(month);
+  dropdown.appendChild(option);
+ });
+
+ if([...dropdown.options].some(o=>o.value===oldValue)){
+  dropdown.value=oldValue;
+ }
+}
+
+function escapeHTML(value){
+ return String(value).replace(/[&<>"']/g,c=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+ }[c]));
+}
+
+function render(){
+ updateFilterDropdown();
+
+ const filter=document.getElementById('date-filter').value||'all';
+ const data=currentData();
+ const filteredDates=data.dates.filter(x=>
+  filter==='all'||x.date.startsWith(filter)
+ );
+
+ document.getElementById('filter-status').textContent=
+  filter==='all'
+   ?`Showing all ${filteredDates.length} ${CATEGORY_LABELS[currentCategory].toLowerCase()} dates.`
+   :`Showing ${filteredDates.length} of ${data.dates.length} dates in ${formatMonthYear(filter)}.`;
+
+ document.getElementById('stat-cadets').textContent=state.students.length;
+ document.getElementById('stat-activities').textContent=data.dates.length;
+ document.getElementById('stat-activity-label').textContent=`${CATEGORY_LABELS[currentCategory]} Dates`;
+
+ const pctList=state.students
+  .filter(s=>data.dates.some(d=>['P','A'].includes(data.attendance[`${s.id}_${d.date}`])))
+  .map(s=>calculatePercentage(s.id));
+
+ document.getElementById('stat-average').textContent=
+  (pctList.length?Math.round(pctList.reduce((a,b)=>a+b,0)/pctList.length):0)+'%';
+
+ document.getElementById('table-header-row').innerHTML=
+  '<th class="sticky1">#</th><th class="sticky2">Cadet Name</th>'+
+  filteredDates.map(item=>`
+   <th class="datehead">
+    <div class="date-line">
+     <span>${escapeHTML(item.date)}</span>
+     <button class="danger small" title="Delete date" onclick="deleteDate('${escapeHTML(item.date)}')">×</button>
+    </div>
+    <span class="weight">${escapeHTML(item.label||CATEGORY_LABELS[currentCategory])} · weight ${Number(item.weight)||1}</span>
+   </th>
+  `).join('')+
+  '<th style="min-width:100px;text-align:center">Total %</th><th style="text-align:center">Action</th>';
+
+ const body=document.getElementById('student-rows');
+
+ if(!state.students.length){
+  body.innerHTML=`<tr><td colspan="${filteredDates.length+4}" class="empty">No cadets yet. Click “+ Add Cadet” to begin.</td></tr>`;
+  return;
+ }
+
+ body.innerHTML=state.students.map((student,index)=>{
+  const cells=filteredDates.map(item=>{
+   const status=data.attendance[`${student.id}_${item.date}`]||'';
+   const cls=status==='P'?'present':status==='A'?'absent':'unmarked';
+
+   return `<td><button class="cell-btn ${cls}" onclick="toggleAttendance('${student.id}','${escapeHTML(item.date)}')" aria-label="${escapeHTML(student.name)} ${escapeHTML(item.date)} ${status||'unmarked'}">${status||'–'}</button></td>`;
+  }).join('');
+
+  return `<tr>
+   <td class="sticky1">${index+1}</td>
+   <td class="sticky2"><strong>${escapeHTML(student.name)}</strong></td>
+   ${cells}
+   <td style="text-align:center"><span class="pct">${calculatePercentage(student.id)}%</span></td>
+   <td style="text-align:center"><button class="danger small" onclick="deleteStudent('${student.id}')">Delete</button></td>
+  </tr>`;
+ }).join('');
+}
+
+function csvCell(value){
+ return '"'+String(value??'').replace(/"/g,'""')+'"';
+}
+
+function downloadBlob(content,filename,type){
+ const blob=new Blob([content],{type});
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');
+ link.href=url;
+ link.download=filename;
+ document.body.appendChild(link);
+ link.click();
+ link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportCSV(){
+ const rows=[['Category','SR No','Cadet Name','Date','Activity','Weightage','Status','Category Attendance %']];
+
+ CATEGORIES.forEach(category=>{
+  const data=state.categories[category];
+
+  state.students.forEach((student,index)=>{
+   if(!data.dates.length){
     rows.push([
-      person.name,
-      person.number || "",
-      ...statuses,
-      presentWeight,
-      absentWeight,
-      percentage.toFixed(1) + "%"
+     CATEGORY_LABELS[category],index+1,student.name,'','','','',
+     calculatePercentage(student.id,category)+'%'
     ]);
+   }else{
+    data.dates.forEach(item=>{
+     rows.push([
+      CATEGORY_LABELS[category],
+      index+1,
+      student.name,
+      item.date,
+      item.label||CATEGORY_LABELS[category],
+      item.weight||1,
+      data.attendance[`${student.id}_${item.date}`]||'-',
+      calculatePercentage(student.id,category)+'%'
+     ]);
+    });
+   }
   });
+ });
 
-  const csv = rows.map(row => row.map(value => {
-    const text = String(value ?? "");
-    return '"' + text.replace(/"/g, '""') + '"';
-  }).join(",")).join("\r\n");
-
-  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `NCC_${currentTab}_Attendance.csv`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+ downloadBlob(
+  '\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n'),
+  `NCC_Attendance_Register_${localDateString()}.csv`,
+  'text/csv;charset=utf-8;'
 }
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[character]);
-}
-
-function renderAll() {
-  renderStudents();
-  renderAttendance();
-}
-
-renderAll();
+render();
 </script>
 </body>
 </html>
