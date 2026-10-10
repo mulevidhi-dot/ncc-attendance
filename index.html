@@ -4,455 +4,235 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NCC Battalion Attendance Register</title>
-
-  <!-- Tailwind CSS: styling loads from the internet -->
+  <title>NCC Attendance Register</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
-    .sticky-col-1 {
-      position: sticky;
-      left: 0;
-      z-index: 10;
-      background-color: #fff;
-    }
-
-    .sticky-col-2 {
-      position: sticky;
-      left: 48px;
-      z-index: 10;
-      background-color: #fff;
-    }
-
-    .sticky-header-1 {
-      position: sticky;
-      left: 0;
-      z-index: 20;
-      background-color: #f8fafc;
-    }
-
-    .sticky-header-2 {
-      position: sticky;
-      left: 48px;
-      z-index: 20;
-      background-color: #f8fafc;
-    }
-
-    button:focus-visible,
-    select:focus-visible,
-    input:focus-visible {
-      outline: 2px solid #2563eb;
-      outline-offset: 2px;
-    }
+    body { font-family: Arial, sans-serif; }
+    .tab-active { background: #166534; color: white; }
+    .attendance-btn { min-width: 42px; padding: 6px 10px; border-radius: 6px; font-weight: bold; }
+    .present { background: #bbf7d0; color: #166534; }
+    .absent { background: #fecaca; color: #991b1b; }
+    .unset { background: #e5e7eb; color: #374151; }
+    th, td { padding: 9px; border: 1px solid #d1d5db; text-align: center; }
+    th { background: #f3f4f6; }
   </style>
 </head>
-
-<body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
-
-<div class="max-w-7xl mx-auto space-y-6">
-
-  <!-- Header -->
-  <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6
-    flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-
-    <div>
-      <div class="flex items-center gap-2 flex-wrap">
-        <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
-        <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
-        <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
-        <h1 class="text-2xl font-bold text-slate-900 ml-2">
-          NCC Battalion Attendance Register
-        </h1>
-      </div>
-
-      <p class="text-sm text-slate-500 mt-1">
-        Tabbed Register • Parades, Events & Officials
-      </p>
-    </div>
-
-    <div class="flex flex-wrap gap-2">
-      <button onclick="addStudent()"
-        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
-        + Add Cadet Name
-      </button>
-
-      <button onclick="addDate()" id="btn-add-date"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-        + Add Parade Date
-      </button>
-
-      <button onclick="exportToCSV()"
-        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-        Export CSV
-      </button>
-
-      <button onclick="backupData()"
-        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-        Backup Data
-      </button>
-
-      <button onclick="document.getElementById('restore-file').click()"
-        class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-        Restore Data
-      </button>
-
-      <input id="restore-file" type="file" accept=".json,application/json"
-        class="hidden" onchange="restoreData(event)">
-    </div>
+<body class="bg-gray-100 min-h-screen text-gray-800">
+  <header class="bg-green-800 text-white p-5">
+    <h1 class="text-2xl font-bold">NCC Attendance Register</h1>
+    <p class="mt-1 text-sm">Cadet attendance management system</p>
   </header>
 
-  <!-- Statistics -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+  <main class="max-w-7xl mx-auto p-4 space-y-5">
+    <section class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-lg font-bold mb-3">Select Register</h2>
+      <div class="flex flex-wrap gap-2">
+        <button class="tab-active px-4 py-2 rounded-lg" data-tab="Parades" onclick="switchTab('Parades')">Parades</button>
+        <button class="px-4 py-2 rounded-lg bg-gray-200" data-tab="Events" onclick="switchTab('Events')">Events</button>
+        <button class="px-4 py-2 rounded-lg bg-gray-200" data-tab="Officials" onclick="switchTab('Officials')">Officials</button>
+      </div>
+    </section>
 
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Total Cadets
-      </p>
-      <p id="stat-cadets" class="text-2xl font-bold mt-1">0</p>
-    </div>
+    <section class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-lg font-bold mb-3">Manage Cadets / Officials</h2>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input id="studentName" class="border rounded-lg p-2 flex-1" placeholder="Enter full name">
+        <input id="studentNumber" class="border rounded-lg p-2 sm:w-48" placeholder="Roll / NCC number">
+        <button onclick="addStudent()" class="bg-green-700 hover:bg-green-800 text-white rounded-lg px-4 py-2">Add Person</button>
+      </div>
+      <p class="text-sm text-gray-500 mt-2">Choose a tab above to manage people for that register.</p>
+      <div id="studentList" class="mt-4 space-y-2"></div>
+    </section>
 
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Parade Dates
-      </p>
-      <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
-    </div>
+    <section class="bg-white rounded-xl shadow p-4">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-bold">Attendance</h2>
+          <p id="registerTitle" class="text-sm text-gray-500">Parades Register</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button onclick="addDate()" class="bg-green-700 text-white rounded-lg px-4 py-2">Add Date</button>
+          <button onclick="exportCSV()" class="bg-blue-700 text-white rounded-lg px-4 py-2">Export CSV</button>
+        </div>
+      </div>
 
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Event Dates
-      </p>
-      <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-    </div>
+      <div class="mt-4 flex flex-wrap items-center gap-3">
+        <label for="monthFilter" class="font-semibold">Filter month:</label>
+        <select id="monthFilter" onchange="renderAttendance()" class="border rounded-lg p-2">
+          <option value="all">All months</option>
+        </select>
+        <span class="text-sm text-gray-500">Click a status to cycle: Not marked → Present → Absent → Not marked.</span>
+      </div>
 
-    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-        Official Dates
-      </p>
-      <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
-    </div>
-  </div>
+      <div id="attendanceTable" class="mt-4 overflow-x-auto"></div>
+    </section>
 
-  <!-- Category Tabs -->
-  <div class="flex flex-wrap border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-2">
-
-    <button onclick="switchTab('parades')" id="tab-parades"
-      class="pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600">
-      Parades
-    </button>
-
-    <button onclick="switchTab('events')" id="tab-events"
-      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent">
-      Events
-    </button>
-
-    <button onclick="switchTab('officials')" id="tab-officials"
-      class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent">
-      Officials
-    </button>
-  </div>
-
-  <!-- Month Filter -->
-  <div class="bg-white shadow-sm border-x border-slate-200 px-6 py-3
-    flex flex-col md:flex-row items-center justify-between gap-4">
-
-    <div class="flex items-center gap-3 flex-wrap">
-      <label for="date-filter" class="text-sm font-medium text-slate-600">
-        Filter Dates by Month:
-      </label>
-
-      <select id="date-filter" onchange="render()"
-        class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold">
-        <option value="all">Show All Dates</option>
-      </select>
-    </div>
-
-    <p id="filter-status" class="text-sm text-slate-500">
-      Showing all dates.
-    </p>
-  </div>
-
-  <!-- Attendance Table -->
-  <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
-
-    <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-3 gap-2">
-      <h2 id="section-title" class="text-lg font-bold text-slate-900">
-        Parade Attendance Register
-      </h2>
-
-      <span id="section-badge"
-        class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">
-        Viewing Parades
-      </span>
-    </div>
-
-    <p class="text-xs text-slate-500">
-      Click a cell to change attendance: - → P (Present) → A (Absent) → -.
-      When adding a date, you can assign its weightage.
-    </p>
-
-    <div class="overflow-x-auto max-w-full">
-      <table class="w-full text-left border-collapse min-w-max">
-        <thead>
-          <tr id="table-header-row"
-            class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
-          </tr>
-        </thead>
-
-        <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-        </tbody>
-      </table>
-    </div>
-
-    <p class="text-xs text-slate-500">
-      Attendance percentage uses the weightage of dates marked Present or Absent.
-      Unmarked dates are not included in the calculation.
-    </p>
-  </div>
-
-  <p class="text-center text-xs text-slate-500">
-    Data is saved in this browser on this computer. Back up your data regularly.
-  </p>
-
-</div>
+    <section class="bg-white rounded-xl shadow p-4">
+      <h2 class="text-lg font-bold mb-3">Attendance Summary</h2>
+      <div id="summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+    </section>
+    <p class="text-xs text-gray-500">Data is saved in this browser on this device. It does not automatically sync to another computer. Tailwind styling requires an internet connection.</p>
+  </main>
 
 <script>
-"use strict";
+const TABS = ["Parades", "Events", "Officials"];
 
-const CATEGORIES = ["parades", "events", "officials"];
+let currentTab = "Parades";
+let students = loadData("ncc_students", { Parades: [], Events: [], Officials: [] });
+let dates = loadData("ncc_dates", { Parades: [], Events: [], Officials: [] });
+let attendance = loadData("ncc_attendance", { Parades: {}, Events: {}, Officials: {} });
+let weights = loadData("ncc_weights", { Parades: {}, Events: {}, Officials: {} });
 
-const TITLES = {
-  parades: "Parade Attendance Register",
-  events: "Event Attendance Register",
-  officials: "Official Duties Attendance Register"
-};
-
-const BADGES = {
-  parades: "Viewing Parades",
-  events: "Viewing Events",
-  officials: "Viewing Officials"
-};
-
-const DATE_BUTTONS = {
-  parades: "+ Add Parade Date",
-  events: "+ Add Event Date",
-  officials: "+ Add Official Date"
-};
-
-const PERCENTAGE_LABELS = {
-  parades: "Parade %",
-  events: "Event %",
-  officials: "Official %"
-};
-
-let currentTab = "parades";
-
-function readJSON(key, fallback) {
+function loadData(key, fallback) {
   try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : JSON.parse(value);
-  } catch (error) {
-    console.error("Could not read saved data:", key, error);
+    const saved = localStorage.getItem(key);
+    return saved ? { ...fallback, ...JSON.parse(saved) } : fallback;
+  } catch {
     return fallback;
   }
 }
 
-function makeDefaultDates() {
-  return {
-    parades: ["2026-05-19", "2026-05-26"],
-    events: ["2026-06-01"],
-    officials: ["2026-06-10"]
-  };
-}
-
-function makeDefaultAttendance() {
-  return {
-    parades: {
-      "1_2026-05-19": "P",
-      "2_2026-05-19": "P"
-    },
-    events: {
-      "1_2026-06-01": "P"
-    },
-    officials: {
-      "1_2026-06-10": "P"
-    }
-  };
-}
-
-function normalizeDates(value) {
-  const result = {};
-  CATEGORIES.forEach(category => {
-    result[category] = Array.isArray(value?.[category])
-      ? [...new Set(value[category].filter(isValidDate))].sort()
-      : [];
-  });
-  return result;
-}
-
-function normalizeAttendance(value) {
-  const result = {};
-  CATEGORIES.forEach(category => {
-    result[category] = {};
-    const records = value?.[category];
-
-    if (records && typeof records === "object" && !Array.isArray(records)) {
-      Object.entries(records).forEach(([key, status]) => {
-        if (status === "P" || status === "A") {
-          result[category][key] = status;
-        }
-      });
-    }
-  });
-  return result;
-}
-
-function normalizeWeights(value, dateData) {
-  const result = {};
-  CATEGORIES.forEach(category => {
-    result[category] = {};
-    dateData[category].forEach(date => {
-      const weight = Number(value?.[category]?.[date]);
-      result[category][date] = Number.isFinite(weight) && weight > 0
-        ? weight
-        : 1;
-    });
-  });
-  return result;
-}
-
-let students = readJSON("ncc_students", [
-  { id: "1", name: "Ansh" },
-  { id: "2", name: "Pawan" },
-  { id: "3", name: "Pranav" }
-]);
-
-if (!Array.isArray(students)) students = [];
-
-students = students
-  .filter(s => s && s.id !== undefined && typeof s.name === "string")
-  .map(s => ({ id: String(s.id), name: s.name }));
-
-let dates = normalizeDates(readJSON("ncc_dates", makeDefaultDates()));
-let attendance = normalizeAttendance(
-  readJSON("ncc_attendance", makeDefaultAttendance())
-);
-let weights = normalizeWeights(readJSON("ncc_weights", {}), dates);
-
-// Ensure every category has the required data structures.
-CATEGORIES.forEach(category => {
-  if (!attendance[category]) attendance[category] = {};
-  if (!weights[category]) weights[category] = {};
-});
-
-function isValidDate(value) {
-  if (typeof value !== "string" ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return false;
-  }
-
-  const date = new Date(value + "T00:00:00");
-  return !Number.isNaN(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value;
-}
-
 function saveData() {
-  try {
-    localStorage.setItem("ncc_students", JSON.stringify(students));
-    localStorage.setItem("ncc_dates", JSON.stringify(dates));
-    localStorage.setItem("ncc_attendance", JSON.stringify(attendance));
-    localStorage.setItem("ncc_weights", JSON.stringify(weights));
-    render();
-  } catch (error) {
-    alert("Could not save data. Your browser storage may be full or unavailable. Please make a backup.");
-    console.error(error);
-  }
+  localStorage.setItem("ncc_students", JSON.stringify(students));
+  localStorage.setItem("ncc_dates", JSON.stringify(dates));
+  localStorage.setItem("ncc_attendance", JSON.stringify(attendance));
+  localStorage.setItem("ncc_weights", JSON.stringify(weights));
 }
+
+function ensureTabData() {
+  TABS.forEach(tab => {
+    if (!Array.isArray(students[tab])) students[tab] = [];
+    if (!Array.isArray(dates[tab])) dates[tab] = [];
+    if (!attendance[tab] || typeof attendance[tab] !== "object") attendance[tab] = {};
+    if (!weights[tab] || typeof weights[tab] !== "object") weights[tab] = {};
+  });
+}
+ensureTabData();
 
 function switchTab(tab) {
-  if (!CATEGORIES.includes(tab)) return;
   currentTab = tab;
-
-  CATEGORIES.forEach(category => {
-    const button = document.getElementById("tab-" + category);
-    const active = category === tab;
-
+  document.querySelectorAll("[data-tab]").forEach(button => {
+    const active = button.dataset.tab === tab;
     button.className = active
-      ? "pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600"
-      : "pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent hover:text-slate-800";
+      ? "tab-active px-4 py-2 rounded-lg"
+      : "px-4 py-2 rounded-lg bg-gray-200";
   });
-
-  render();
+  document.getElementById("registerTitle").textContent = tab + " Register";
+  renderAll();
 }
 
 function addStudent() {
-  const name = prompt("Enter Cadet Name:");
-  if (name === null || !name.trim()) return;
+  const nameInput = document.getElementById("studentName");
+  const numberInput = document.getElementById("studentNumber");
+  const name = nameInput.value.trim();
+  const number = numberInput.value.trim();
 
-  students.push({
-    id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
-    name: name.trim()
-  });
-
-  saveData();
-}
-
-function deleteStudent(id) {
-  const student = students.find(s => s.id === id);
-  if (!student) return;
-
-  if (!confirm("Delete " + student.name + " and all their attendance records?")) {
+  if (!name) {
+    alert("Please enter the person's name.");
+    nameInput.focus();
     return;
   }
 
-  students = students.filter(s => s.id !== id);
+  students[currentTab].push({
+    id: Date.now().toString() + Math.random().toString(16).slice(2),
+    name,
+    number
+  });
 
-  CATEGORIES.forEach(category => {
-    Object.keys(attendance[category]).forEach(key => {
-      if (key.startsWith(id + "_")) {
-        delete attendance[category][key];
-      }
-    });
+  nameInput.value = "";
+  numberInput.value = "";
+  saveData();
+  renderAll();
+}
+
+function deleteStudent(id) {
+  const person = students[currentTab].find(s => s.id === id);
+  if (!person) return;
+  if (!confirm("Delete " + person.name + "? Their attendance records will also be removed.")) return;
+
+  students[currentTab] = students[currentTab].filter(s => s.id !== id);
+  dates[currentTab].forEach(date => {
+    if (attendance[currentTab][date]) delete attendance[currentTab][date][id];
   });
 
   saveData();
+  renderAll();
+}
+
+function renderStudents() {
+  const container = document.getElementById("studentList");
+  const list = students[currentTab];
+
+  if (!list.length) {
+    container.innerHTML = '<p class="text-gray-500 text-sm">No people added yet.</p>';
+    return;
+  }
+
+  container.innerHTML = list.map(person => `
+    <div class="flex flex-wrap justify-between items-center gap-2 border rounded-lg p-3">
+      <div>
+        <span class="font-semibold">${escapeHTML(person.name)}</span>
+        ${person.number ? `<span class="text-gray-500 text-sm ml-2">(${escapeHTML(person.number)})</span>` : ""}
+      </div>
+      <button class="text-red-700 hover:underline" onclick="deleteStudent('${person.id}')">Delete</button>
+    </div>
+  `).join("");
+}
+
+/* Strict YYYY-MM-DD validation that also handles leap years and invalid dates. */
+function isValidDate(value) {
+  if (typeof value !== "string") return false;
+
+  const match = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return false;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const date = new Date(0);
+  date.setFullYear(year, month - 1, day);
+  date.setHours(12, 0, 0, 0);
+
+  return date.getFullYear() === year &&
+         date.getMonth() === month - 1 &&
+         date.getDate() === day;
+}
+
+function localDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function addDate() {
-  const today = new Date();
-  const localToday = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0")
-  ].join("-");
-
-  const date = prompt(
-    "Enter " + currentTab.slice(0, -1) + " date (YYYY-MM-DD):",
-    localToday
+  const input = prompt(
+    "Enter date in YYYY-MM-DD format (example: 2026-10-10):",
+    localDateString(new Date())
   );
 
-  if (date === null) return;
+  if (input === null) return;
+
+  const date = input.trim();
 
   if (!isValidDate(date)) {
-    alert("Please enter a valid date in YYYY-MM-DD format.");
+    alert("Invalid date. Please enter a real date in YYYY-MM-DD format, such as 2026-10-10.");
     return;
   }
 
   if (dates[currentTab].includes(date)) {
-    alert("This date already exists in this category.");
+    alert("This date already exists.");
     return;
   }
 
-  const weightText = prompt(
-    "Enter the weightage for this date (a positive number).\nExample: 1 for a normal parade, 2 for a double-weight activity.",
-    "1"
-  );
+  const weightInput = prompt("Enter weightage for this date (default 1):", "1");
+  if (weightInput === null) return;
 
-  if (weightText === null) return;
+  const weight = Number(weightInput.trim());
 
-  const weight = Number(weightText);
   if (!Number.isFinite(weight) || weight <= 0) {
-    alert("Weightage must be a positive number, such as 1 or 2.");
+    alert("Weightage must be a number greater than zero.");
     return;
   }
 
@@ -461,433 +241,252 @@ function addDate() {
   weights[currentTab][date] = weight;
 
   saveData();
+  renderAll();
 }
 
-function deleteDate(dateToDelete) {
-  if (!confirm("Delete the date " + dateToDelete +
-      " and all attendance records for this date in this category?")) {
-    return;
-  }
+function deleteDate(date) {
+  if (!confirm("Delete date " + date + " and its attendance records?")) return;
 
-  dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
-  delete weights[currentTab][dateToDelete];
-
-  Object.keys(attendance[currentTab]).forEach(key => {
-    if (key.endsWith("_" + dateToDelete)) {
-      delete attendance[currentTab][key];
-    }
-  });
+  dates[currentTab] = dates[currentTab].filter(d => d !== date);
+  delete attendance[currentTab][date];
+  delete weights[currentTab][date];
 
   saveData();
+  renderAll();
 }
 
-function editWeight(date) {
-  const currentWeight = weights[currentTab][date] || 1;
-  const value = prompt("Enter new weightage for " + date + ":", String(currentWeight));
-
-  if (value === null) return;
-
-  const weight = Number(value);
-  if (!Number.isFinite(weight) || weight <= 0) {
-    alert("Weightage must be a positive number.");
-    return;
-  }
-
-  weights[currentTab][date] = weight;
-  saveData();
+function getFilteredDates() {
+  const month = document.getElementById("monthFilter").value;
+  return dates[currentTab]
+    .filter(date => month === "all" || date.startsWith(month))
+    .sort();
 }
 
-function toggleAttendance(studentId, date) {
-  const key = studentId + "_" + date;
-  const current = attendance[currentTab][key];
+function renderMonthFilter() {
+  const select = document.getElementById("monthFilter");
+  const oldValue = select.value || "all";
+  const months = [...new Set(dates[currentTab].map(d => d.slice(0, 7)))].sort();
 
-  if (!current) {
-    attendance[currentTab][key] = "P";
-  } else if (current === "P") {
-    attendance[currentTab][key] = "A";
+  select.innerHTML = '<option value="all">All months</option>' +
+    months.map(month => `<option value="${month}">${month}</option>`).join("");
+
+  select.value = months.includes(oldValue) ? oldValue : "all";
+}
+
+function cycleAttendance(studentId, date) {
+  if (!attendance[currentTab][date]) attendance[currentTab][date] = {};
+
+  const current = attendance[currentTab][date][studentId] || "-";
+  const next = current === "-" ? "P" : current === "P" ? "A" : "-";
+
+  if (next === "-") {
+    delete attendance[currentTab][date][studentId];
   } else {
-    delete attendance[currentTab][key];
+    attendance[currentTab][date][studentId] = next;
   }
 
   saveData();
+  renderAll();
 }
 
-function calculatePercentage(category, studentId) {
-  let presentWeight = 0;
-  let markedWeight = 0;
+function statusButton(studentId, date) {
+  const status = attendance[currentTab][date]?.[studentId] || "-";
+  const css = status === "P" ? "present" : status === "A" ? "absent" : "unset";
 
-  dates[category].forEach(date => {
-    const status = attendance[category][studentId + "_" + date];
+  return `<button class="attendance-btn ${css}"
+    title="Click to change attendance"
+    onclick="cycleAttendance('${studentId}', '${date}')">${status}</button>`;
+}
 
-    if (status !== "P" && status !== "A") return;
+function renderAttendance() {
+  renderMonthFilter();
 
-    const weight = Number(weights[category][date]) || 1;
-    markedWeight += weight;
+  const container = document.getElementById("attendanceTable");
+  const list = students[currentTab];
+  const filteredDates = getFilteredDates();
 
-    if (status === "P") {
-      presentWeight += weight;
-    }
+  if (!list.length) {
+    container.innerHTML = '<p class="text-gray-500 p-3">Add people to begin recording attendance.</p>';
+    renderSummary();
+    return;
+  }
+
+  if (!filteredDates.length) {
+    container.innerHTML = '<p class="text-gray-500 p-3">No dates found for this filter. Click Add Date to begin.</p>';
+    renderSummary();
+    return;
+  }
+
+  let html = '<table class="w-full text-sm border-collapse"><thead><tr>';
+  html += '<th>Name / Roll No.</th>';
+
+  filteredDates.forEach(date => {
+    html += `<th>
+      <div>${escapeHTML(date)}</div>
+      <div class="text-xs font-normal text-gray-500">Weight: ${Number(weights[currentTab][date] || 1)}</div>
+      <button class="text-red-600 text-xs mt-1" onclick="deleteDate('${date}')">Delete</button>
+    </th>`;
   });
 
-  if (markedWeight === 0) return null;
+  html += '<th>Present</th><th>Absent</th><th>Attendance %</th></tr></thead><tbody>';
 
-  return Math.round((presentWeight / markedWeight) * 100);
-}
+  list.forEach(person => {
+    let presentWeight = 0;
+    let absentWeight = 0;
+    let markedWeight = 0;
+    let totalWeight = 0;
 
-function csvEscape(value) {
-  let text = String(value ?? "");
+    filteredDates.forEach(date => {
+      const weight = Number(weights[currentTab][date] || 1);
+      totalWeight += weight;
 
-  // Prevent spreadsheet formula execution for text values.
-  if (/^[=+\-@]/.test(text)) text = "'" + text;
-
-  return '"' + text.replace(/"/g, '""') + '"';
-}
-
-function exportToCSV() {
-  const rows = [[
-    "Category", "Sr No", "Cadet Name", "Date",
-    "Weightage", "Attendance Status", "Attendance Percentage"
-  ]];
-
-  CATEGORIES.forEach(category => {
-    students.forEach((student, index) => {
-      const percentage = calculatePercentage(category, student.id);
-      const percentageText = percentage === null ? "Not marked" : percentage + "%";
-
-      if (dates[category].length === 0) {
-        rows.push([
-          category.toUpperCase(),
-          index + 1,
-          student.name,
-          "",
-          "",
-          "No dates",
-          percentageText
-        ]);
+      const status = attendance[currentTab][date]?.[person.id] || "-";
+      if (status === "P") {
+        presentWeight += weight;
+        markedWeight += weight;
+      } else if (status === "A") {
+        absentWeight += weight;
+        markedWeight += weight;
       }
+    });
 
-      dates[category].forEach(date => {
-        const status = attendance[category][student.id + "_" + date] || "Not marked";
+    const percentage = totalWeight > 0 ? (presentWeight / totalWeight) * 100 : 0;
 
-        rows.push([
-          category.toUpperCase(),
-          index + 1,
-          student.name,
-          date,
-          weights[category][date] || 1,
-          status,
-          percentageText
-        ]);
-      });
+    html += `<tr>
+      <td class="text-left">
+        <div class="font-semibold">${escapeHTML(person.name)}</div>
+        <div class="text-xs text-gray-500">${escapeHTML(person.number || "")}</div>
+      </td>`;
+
+    filteredDates.forEach(date => {
+      html += `<td>${statusButton(person.id, date)}</td>`;
+    });
+
+    html += `<td>${presentWeight}</td>
+      <td>${absentWeight}</td>
+      <td class="font-bold">${percentage.toFixed(1)}%</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+  renderSummary();
+}
+
+function renderSummary() {
+  const container = document.getElementById("summary");
+  const list = students[currentTab];
+  const filteredDates = getFilteredDates();
+
+  let totalPresent = 0;
+  let totalAbsent = 0;
+  let totalWeight = 0;
+
+  filteredDates.forEach(date => {
+    const weight = Number(weights[currentTab][date] || 1);
+    totalWeight += weight;
+
+    list.forEach(person => {
+      const status = attendance[currentTab][date]?.[person.id] || "-";
+      if (status === "P") totalPresent += weight;
+      if (status === "A") totalAbsent += weight;
     });
   });
 
-  const csv = "\uFEFF" + rows
-    .map(row => row.map(csvEscape).join(","))
-    .join("\r\n");
+  const overallPercent = list.length && totalWeight
+    ? (totalPresent / (list.length * totalWeight)) * 100
+    : 0;
 
-  downloadFile(
-    csv,
-    "NCC_Register_" + localDateString() + ".csv",
-    "text/csv;charset=utf-8;"
-  );
+  container.innerHTML = `
+    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+      <p class="text-sm text-gray-600">People</p>
+      <p class="text-2xl font-bold">${list.length}</p>
+    </div>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <p class="text-sm text-gray-600">Present (weighted)</p>
+      <p class="text-2xl font-bold">${totalPresent}</p>
+    </div>
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <p class="text-sm text-gray-600">Overall Attendance</p>
+      <p class="text-2xl font-bold">${overallPercent.toFixed(1)}%</p>
+    </div>
+  `;
 }
 
-function localDateString() {
-  const date = new Date();
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0")
-  ].join("-");
-}
+function exportCSV() {
+  const list = students[currentTab];
+  const allDates = dates[currentTab].slice().sort();
 
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type: type });
+  if (!list.length || !allDates.length) {
+    alert("Add people and dates before exporting.");
+    return;
+  }
+
+  const rows = [
+    ["Register", currentTab],
+    ["Name", "Roll / NCC Number", ...allDates, "Present Weight", "Absent Weight", "Attendance %"]
+  ];
+
+  list.forEach(person => {
+    let presentWeight = 0;
+    let absentWeight = 0;
+    let totalWeight = 0;
+
+    const statuses = allDates.map(date => {
+      const status = attendance[currentTab][date]?.[person.id] || "-";
+      const weight = Number(weights[currentTab][date] || 1);
+      totalWeight += weight;
+
+      if (status === "P") presentWeight += weight;
+      if (status === "A") absentWeight += weight;
+
+      return status;
+    });
+
+    const percentage = totalWeight ? (presentWeight / totalWeight) * 100 : 0;
+
+    rows.push([
+      person.name,
+      person.number || "",
+      ...statuses,
+      presentWeight,
+      absentWeight,
+      percentage.toFixed(1) + "%"
+    ]);
+  });
+
+  const csv = rows.map(row => row.map(value => {
+    const text = String(value ?? "");
+    return '"' + text.replace(/"/g, '""') + '"';
+  }).join(",")).join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-
   link.href = url;
-  link.download = filename;
+  link.download = `NCC_${currentTab}_Attendance.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();
-
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  URL.revokeObjectURL(url);
 }
 
-function backupData() {
-  const backup = {
-    app: "NCC Battalion Attendance Register",
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    students: students,
-    dates: dates,
-    attendance: attendance,
-    weights: weights
-  };
-
-  downloadFile(
-    JSON.stringify(backup, null, 2),
-    "NCC_Attendance_Backup_" + localDateString() + ".json",
-    "application/json"
-  );
-
-  alert("Backup downloaded. Keep this JSON file safe. You can restore it on another computer.");
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
 }
 
-function restoreData(event) {
-  const file = event.target.files && event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = function() {
-    try {
-      const data = JSON.parse(reader.result);
-
-      if (!data || !Array.isArray(data.students) ||
-          !data.dates || !data.attendance) {
-        throw new Error("The selected file is not a valid NCC backup.");
-      }
-
-      if (!confirm("Restoring will replace the current register data on this computer. Continue?")) {
-        event.target.value = "";
-        return;
-      }
-
-      students = data.students
-        .filter(s => s && s.id !== undefined && typeof s.name === "string")
-        .map(s => ({ id: String(s.id), name: s.name }));
-
-      dates = normalizeDates(data.dates);
-      attendance = normalizeAttendance(data.attendance);
-      weights = normalizeWeights(data.weights || {}, dates);
-
-      CATEGORIES.forEach(category => {
-        dates[category].forEach(date => {
-          const weight = Number(data.weights?.[category]?.[date]);
-          weights[category][date] =
-            Number.isFinite(weight) && weight > 0 ? weight : 1;
-        });
-      });
-
-      saveData();
-      alert("Backup restored successfully.");
-    } catch (error) {
-      alert("Could not restore this file. Please select a valid NCC backup JSON file.");
-      console.error(error);
-    } finally {
-      event.target.value = "";
-    }
-  };
-
-  reader.onerror = function() {
-    alert("Unable to read the selected file.");
-    event.target.value = "";
-  };
-
-  reader.readAsText(file);
+function renderAll() {
+  renderStudents();
+  renderAttendance();
 }
 
-function getAvailableMonths() {
-  return [...new Set(
-    dates[currentTab].map(date => date.substring(0, 7))
-  )].sort();
-}
-
-function formatMonthYear(value) {
-  const parts = value.split("-");
-  const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-
-  return date.toLocaleString("en-IN", {
-    month: "long",
-    year: "numeric"
-  });
-}
-
-function updateFilterDropdown() {
-  const dropdown = document.getElementById("date-filter");
-  const previousValue = dropdown.value;
-  const months = getAvailableMonths();
-
-  dropdown.innerHTML = "";
-
-  const allOption = document.createElement("option");
-  allOption.value = "all";
-  allOption.textContent = "Show All Dates";
-  dropdown.appendChild(allOption);
-
-  months.forEach(month => {
-    const option = document.createElement("option");
-    option.value = month;
-    option.textContent = formatMonthYear(month);
-    dropdown.appendChild(option);
-  });
-
-  dropdown.value = months.includes(previousValue) || previousValue === "all"
-    ? previousValue
-    : "all";
-}
-
-function render() {
-  updateFilterDropdown();
-
-  const selectedFilter = document.getElementById("date-filter").value;
-  const categoryDates = dates[currentTab];
-
-  const filteredDates = selectedFilter === "all"
-    ? categoryDates
-    : categoryDates.filter(date => date.startsWith(selectedFilter));
-
-  document.getElementById("filter-status").textContent =
-    selectedFilter === "all"
-      ? "Showing all " + filteredDates.length + " dates."
-      : "Showing " + filteredDates.length + " of " +
-        categoryDates.length + " dates in " + formatMonthYear(selectedFilter) + ".";
-
-  document.getElementById("section-title").textContent = TITLES[currentTab];
-  document.getElementById("section-badge").textContent = BADGES[currentTab];
-  document.getElementById("btn-add-date").textContent = DATE_BUTTONS[currentTab];
-
-  const headerRow = document.getElementById("table-header-row");
-  const headerParts = [
-    '<th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>',
-    '<th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Cadet Name</th>'
-  ];
-
-  filteredDates.forEach(date => {
-    const th = document.createElement("th");
-    th.className = "p-3 border-r border-slate-200 min-w-[150px] text-center";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "flex flex-col items-center gap-1";
-
-    const dateLabel = document.createElement("span");
-    dateLabel.textContent = date;
-
-    const weightButton = document.createElement("button");
-    weightButton.className = "text-blue-600 hover:text-blue-800 text-xs";
-    weightButton.textContent = "Weight: " + (weights[currentTab][date] || 1);
-    weightButton.title = "Click to edit weightage";
-    weightButton.onclick = () => editWeight(date);
-
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "text-slate-400 hover:text-red-600 font-bold text-sm";
-    deleteButton.textContent = "Delete date";
-    deleteButton.onclick = () => deleteDate(date);
-
-    wrapper.append(dateLabel, weightButton, deleteButton);
-    th.appendChild(wrapper);
-    headerParts.push(th);
-  });
-
-  const percentageHeader = document.createElement("th");
-  percentageHeader.className = "p-3 border-l border-slate-200 bg-slate-100 text-center w-28";
-  percentageHeader.textContent = PERCENTAGE_LABELS[currentTab];
-  headerParts.push(percentageHeader);
-
-  const actionHeader = document.createElement("th");
-  actionHeader.className = "p-3 text-center w-20";
-  actionHeader.textContent = "Action";
-  headerParts.push(actionHeader);
-
-  headerRow.replaceChildren();
-
-  headerParts.forEach(part => {
-    if (typeof part === "string") {
-      const template = document.createElement("template");
-      template.innerHTML = part;
-      headerRow.appendChild(template.content);
-    } else {
-      headerRow.appendChild(part);
-    }
-  });
-
-  const rowsContainer = document.getElementById("student-rows");
-  rowsContainer.innerHTML = "";
-
-  students.forEach((student, index) => {
-    const row = document.createElement("tr");
-    row.className = "hover:bg-slate-50 transition";
-
-    const numberCell = document.createElement("td");
-    numberCell.className = "p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1";
-    numberCell.textContent = index + 1;
-    row.appendChild(numberCell);
-
-    const nameCell = document.createElement("td");
-    nameCell.className = "p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2";
-    nameCell.textContent = student.name;
-    row.appendChild(nameCell);
-
-    filteredDates.forEach(date => {
-      const cell = document.createElement("td");
-      cell.className = "p-2 border-r border-slate-200 text-center";
-
-      const status = attendance[currentTab][student.id + "_" + date] || "";
-      const button = document.createElement("button");
-
-      button.className = "w-full h-9 rounded transition text-xs font-bold";
-
-      if (status === "P") {
-        button.classList.add("bg-emerald-500", "text-white", "hover:bg-emerald-600");
-      } else if (status === "A") {
-        button.classList.add("bg-rose-500", "text-white", "hover:bg-rose-600");
-      } else {
-        button.classList.add("bg-slate-50", "text-slate-400", "hover:bg-slate-100");
-      }
-
-      button.textContent = status || "-";
-      button.title = "Click to change attendance";
-      button.setAttribute(
-        "aria-label",
-        student.name + ", " + date + ": " + (status || "not marked")
-      );
-
-      button.onclick = () => toggleAttendance(student.id, date);
-
-      cell.appendChild(button);
-      row.appendChild(cell);
-    });
-
-    const percentageCell = document.createElement("td");
-    percentageCell.className = "p-3 border-l border-slate-200 bg-slate-50 text-center";
-
-    const percentage = calculatePercentage(currentTab, student.id);
-    const badge = document.createElement("span");
-    badge.className = "bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs";
-    badge.textContent = percentage === null ? "—" : percentage + "%";
-    badge.title = percentage === null
-      ? "No attendance marked"
-      : "Weighted attendance percentage";
-
-    percentageCell.appendChild(badge);
-    row.appendChild(percentageCell);
-
-    const actionCell = document.createElement("td");
-    actionCell.className = "p-3 text-center";
-
-    const deleteStudentButton = document.createElement("button");
-    deleteStudentButton.className = "text-slate-400 hover:text-red-600 text-xs";
-    deleteStudentButton.textContent = "Delete";
-    deleteStudentButton.onclick = () => deleteStudent(student.id);
-
-    actionCell.appendChild(deleteStudentButton);
-    row.appendChild(actionCell);
-
-    rowsContainer.appendChild(row);
-  });
-
-  document.getElementById("stat-cadets").textContent = students.length;
-  document.getElementById("stat-parades").textContent = dates.parades.length;
-  document.getElementById("stat-events").textContent = dates.events.length;
-  document.getElementById("stat-officials").textContent = dates.officials.length;
-}
-
-// First display
-render();
+renderAll();
 </script>
-
 </body>
 </html>
