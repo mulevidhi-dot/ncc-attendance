@@ -30,7 +30,7 @@
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">+ Add Name</button>
+        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">+ Add Cadet Name</button>
         <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition" id="btn-add-date">+ Add Date</button>
         <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">📥 Export CSV</button>
       </div>
@@ -71,14 +71,14 @@
           <option value="all">Show All Dates</option>
         </select>
       </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Syncing with Supabase...</p>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Initializing app...</p>
     </div>
 
     <!-- Table Container -->
     <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
         <h2 id="section-title" class="text-lg font-bold text-slate-900">Attendance Register</h2>
-        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Cloud Sync Active</span>
+        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Ready</span>
       </div>
       
       <div class="overflow-x-auto max-w-full">
@@ -92,7 +92,7 @@
             </tr>
           </thead>
           <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-            <tr><td colspan="4" class="text-center p-6 text-slate-400">Loading data...</td></tr>
+            <tr><td colspan="4" class="text-center p-6 text-slate-400">Loading register...</td></tr>
           </tbody>
         </table>
       </div>
@@ -101,27 +101,46 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'sb_publishable_qBMH8I5mPVE4UypLEV6F9w_AVz0ozFK';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
+    // --- REPLACE WITH YOUR ACTUAL SUPABASE URL & ANON KEY ---
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';
 
-    const { createClient } = supabase;
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let db = null;
+    try {
+      if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+        db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) {
+      console.warn("Supabase init skipped, running local state fallback.");
+    }
 
     let currentTab = 'parades';
-    let students = [];
-    let dates = { parades: [], events: [], officials: [] };
+    let students = JSON.parse(localStorage.getItem('ncc_fallback_students')) || [
+      { id: '1', name: 'Ansh' },
+      { id: '2', name: 'Pawan' },
+      { id: '3', name: 'Pranav' }
+    ];
+    let dates = { parades: ['2026-05-19'], events: [], officials: [] };
     let attendance = { parades: {}, events: {}, officials: {} };
 
     async function loadDataFromCloud() {
+      if (!db) {
+        document.getElementById('filter-status').innerText = "Running in Local Mode (Add Supabase URL/Key to sync cloud)";
+        render();
+        return;
+      }
+
       try {
-        document.getElementById('filter-status').innerText = "Syncing cloud database...";
+        document.getElementById('filter-status').innerText = "Syncing with Supabase...";
 
         // 1. Load Cadets
-        const { data: cadetData } = await db.from('cadets').select('*').order('created_at', { ascending: true });
-        students = cadetData || [];
+        const { data: cadetData, error: cadetErr } = await db.from('cadets').select('*').order('created_at', { ascending: true });
+        if (cadetErr) throw cadetErr;
+        if (cadetData && cadetData.length > 0) students = cadetData;
 
         // 2. Load Unified Attendance Table
-        const { data: attData } = await db.from('attendance').select('*');
+        const { data: attData, error: attErr } = await db.from('attendance').select('*');
+        if (attErr) throw attErr;
         
         dates = { parades: [], events: [], officials: [] };
         attendance = { parades: {}, events: {}, officials: {} };
@@ -140,9 +159,12 @@
         });
 
         Object.keys(dates).forEach(cat => dates[cat].sort());
+        document.getElementById('filter-status').innerText = "Cloud Sync Active • Connected successfully.";
         render();
       } catch (err) {
-        console.error("DB Error:", err);
+        console.error("DB Load Error:", err);
+        document.getElementById('filter-status').innerText = "Cloud connection failed. Using local view.";
+        render();
       }
     }
 
@@ -162,36 +184,56 @@
     async function addStudent() {
       const name = prompt("Enter Cadet Name:");
       if (!name || !name.trim()) return;
-      await db.from('cadets').insert([{ id: Date.now().toString(), name: name.trim() }]);
-      await loadDataFromCloud();
+
+      const newCadet = { id: Date.now().toString(), name: name.trim() };
+      students.push(newCadet);
+      localStorage.setItem('ncc_fallback_students', JSON.stringify(students));
+
+      if (db) {
+        await db.from('cadets').insert([newCadet]);
+      }
+      loadDataFromCloud();
     }
 
     async function deleteStudent(id) {
       if (!confirm("Are you sure you want to delete this cadet?")) return;
-      await db.from('cadets').delete().eq('id', id);
-      await db.from('attendance').delete().eq('cadet_id', id);
-      await loadDataFromCloud();
+      students = students.filter(s => s.id !== id);
+      localStorage.setItem('ncc_fallback_students', JSON.stringify(students));
+
+      if (db) {
+        await db.from('cadets').delete().eq('id', id);
+        await db.from('attendance').delete().eq('cadet_id', id);
+      }
+      loadDataFromCloud();
     }
 
     async function addDate() {
       const date = prompt(`Enter ${currentTab.slice(0, -1)} Date (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
       if (!date || dates[currentTab].includes(date)) return;
 
-      // Providing a default identifier string for the mandatory 'name' column constraint
-      await db.from('attendance').insert([{ 
-        name: `${currentTab}_date_${date}`, 
-        category: currentTab, 
-        type: 'date', 
-        date_str: date 
-      }]);
-      await loadDataFromCloud();
+      dates[currentTab].push(date);
+      dates[currentTab].sort();
+
+      if (db) {
+        await db.from('attendance').insert([{ 
+          name: `${currentTab}_date_${date}`, 
+          category: currentTab, 
+          type: 'date', 
+          date_str: date 
+        }]);
+      }
+      loadDataFromCloud();
     }
 
     async function deleteDate(dateToDelete) {
       if (!confirm(`Delete date ${dateToDelete}?`)) return;
 
-      await db.from('attendance').delete().match({ category: currentTab, date_str: dateToDelete });
-      await loadDataFromCloud();
+      dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
+
+      if (db) {
+        await db.from('attendance').delete().match({ category: currentTab, date_str: dateToDelete });
+      }
+      loadDataFromCloud();
     }
 
     async function toggleAttendance(studentId, date) {
@@ -204,27 +246,28 @@
       else if (current === 'P') nextStatus = 'A';
       else nextStatus = '';
 
-      // Delete existing record for this cell
-      await db.from('attendance').delete().match({ category: currentTab, type: 'record', cadet_id: studentId, date_str: date });
-
       if (nextStatus === '') {
         delete attendance[currentTab][key];
       } else {
         attendance[currentTab][key] = nextStatus;
-        // Find cadet name for the mandatory 'name' column
-        const studentObj = students.find(s => s.id === studentId);
-        const cadetName = studentObj ? studentObj.name : 'Unknown';
-
-        await db.from('attendance').insert([{ 
-          name: `${cadetName}_${date}`, 
-          category: currentTab, 
-          type: 'record', 
-          cadet_id: studentId, 
-          date_str: date, 
-          status: nextStatus 
-        }]);
       }
       render();
+
+      if (db) {
+        await db.from('attendance').delete().match({ category: currentTab, type: 'record', cadet_id: studentId, date_str: date });
+        if (nextStatus !== '') {
+          const studentObj = students.find(s => s.id === studentId);
+          const cadetName = studentObj ? studentObj.name : 'Unknown';
+          await db.from('attendance').insert([{ 
+            name: `${cadetName}_${date}`, 
+            category: currentTab, 
+            type: 'record', 
+            cadet_id: studentId, 
+            date_str: date, 
+            status: nextStatus 
+          }]);
+        }
+      }
     }
 
     function calculatePercentage(category, studentId) {
@@ -305,14 +348,12 @@
 
       if (selectedFilter === 'all') {
         filteredDates = catDates;
-        document.getElementById('filter-status').innerText = `Cloud Connected • Showing all ${catDates.length} dates.`;
       } else {
         filteredDates = catDates.filter(d => d.startsWith(selectedFilter));
-        document.getElementById('filter-status').innerText = `Cloud Connected • Showing ${filteredDates.length} of ${catDates.length} dates.`;
       }
       
       const titles = { parades: 'Parade Attendance Register', events: 'Event Attendance Register', officials: 'Official Duties Attendance Register' };
-      const badges = { parades: 'Table: attendance (category = parades)', events: 'Table: attendance (category = events)', officials: 'Table: attendance (category = officials)' };
+      const badges = { parades: 'Viewing Parades', events: 'Viewing Events', officials: 'Viewing Officials' };
       const addBtnLabels = { parades: '+ Add Parade Date', events: '+ Add Event Date', officials: '+ Add Official Date' };
       const pctLabels = { parades: 'Parade %', events: 'Event %', officials: 'Official %' };
 
