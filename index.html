@@ -3,13 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NCC Attendance Register</title>
+  <title>NCC Battalion Attendance Register</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .sticky-col-1 { position: sticky; left: 0; z-index: 10; background-color: #ffffff; }
-    .sticky-col-2 { position: sticky; left: 48px; z-index: 10; background-color: #ffffff; }
-    .sticky-header-1 { position: sticky; left: 0; z-index: 20; background-color: #f8fafc; }
-    .sticky-header-2 { position: sticky; left: 48px; z-index: 20; background-color: #f8fafc; }
+    /* Freeze # and Student Name columns while scrolling dates horizontally */
+    .sticky-col-1 {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      background-color: #ffffff;
+    }
+    .sticky-col-2 {
+      position: sticky;
+      left: 48px; /* Width of the # column */
+      z-index: 10;
+      background-color: #ffffff;
+    }
+    .sticky-header-1 {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+      background-color: #f8fafc;
+    }
+    .sticky-header-2 {
+      position: sticky;
+      left: 48px;
+      z-index: 20;
+      background-color: #f8fafc;
+    }
   </style>
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
@@ -23,75 +45,62 @@
           <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
           <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
           <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
-          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Attendance Register</h1>
+          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Candidate Attendance Register</h1>
         </div>
-        <p class="text-sm text-slate-500 mt-1">Ready & Responsive</p>
+        <p class="text-sm text-slate-500 mt-1">Spreadsheet Register • Click any cell to toggle Present (P) / Absent (A) / Unmarked (-)</p>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer">+ Add Cadet Name</button>
-        <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer" id="btn-add-date">+ Add Date</button>
-        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition cursor-pointer">📥 Export CSV</button>
+        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+          + Add Cadet Name
+        </button>
+        <button onclick="addParadeDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+          + Add Date
+        </button>
+        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+          📥 Export CSV
+        </button>
       </div>
     </header>
 
     <!-- Stats Bar -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Cadets</p>
         <p id="stat-cadets" class="text-2xl font-bold text-slate-800 mt-1">0</p>
       </div>
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Parade Dates</p>
-        <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Dates</p>
-        <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Official Dates</p>
-        <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Parades Conducted</p>
+        <p id="stat-parades" class="text-2xl font-bold text-slate-800 mt-1">0</p>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4">
-      <button onclick="switchTab('parades')" id="tab-parades" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600 cursor-pointer">🛡️ Parades</button>
-      <button onclick="switchTab('events')" id="tab-events" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer">🎖️ Events</button>
-      <button onclick="switchTab('officials')" id="tab-officials" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer">📋 Officials</button>
-    </div>
-
-    <!-- Filter Bar -->
-    <div class="bg-white rounded-none shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+    <!-- Filter Bar (This is Option 3) -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Dates by Month:</label>
+        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Parade Dates:</label>
         <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
-          <option value="all">Show All Dates</option>
+          <option value="all">Show All Parades</option>
         </select>
       </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Ready</p>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all parades.</p>
     </div>
 
-    <!-- Table Container -->
-    <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
-      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
-        <h2 id="section-title" class="text-lg font-bold text-slate-900">Attendance Register</h2>
-        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Active</span>
-      </div>
-      
+    <!-- Main Spreadsheet Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="overflow-x-auto max-w-full">
         <table class="w-full text-left border-collapse min-w-max">
           <thead>
             <tr id="table-header-row" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
               <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
               <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-              <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28" id="header-pct-label">Total %</th>
+              <!-- Dynamic Date Columns inserted here -->
+              <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">Total %</th>
               <th class="p-3 text-center w-20">Action</th>
             </tr>
           </thead>
           <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-            <!-- Rendered dynamically -->
+            <!-- Student rows injected here -->
           </tbody>
         </table>
       </div>
@@ -100,109 +109,80 @@
   </div>
 
   <script>
-    let currentTab = 'parades';
-
     let students = JSON.parse(localStorage.getItem('ncc_students')) || [
       { id: '1', name: 'Ansh' },
       { id: '2', name: 'Pawan' },
       { id: '3', name: 'Pranav' }
     ];
 
-    let dates = JSON.parse(localStorage.getItem('ncc_dates')) || {
-      parades: ['2026-05-19', '2026-05-26'],
-      events: ['2026-06-01'],
-      officials: ['2026-06-10']
-    };
+    let dates = JSON.parse(localStorage.getItem('ncc_dates')) || ['2026-05-19', '2026-05-26', '2026-06-02'];
+    dates.sort();
 
     let attendance = JSON.parse(localStorage.getItem('ncc_attendance')) || {
-      parades: { '1_2026-05-19': 'P', '2_2026-05-19': 'P' },
-      events: { '1_2026-06-01': 'P' },
-      officials: { '1_2026-06-10': 'A' }
+      '1_2026-05-19': 'P', '1_2026-05-26': 'P', '1_2026-06-02': 'P',
+      '2_2026-05-19': 'P', '2_2026-05-26': 'A', '2_2026-06-02': 'P',
+      '3_2026-05-19': 'P', '3_2026-05-26': 'A'
     };
 
-    function saveAndRender() {
+    function saveData() {
       localStorage.setItem('ncc_students', JSON.stringify(students));
       localStorage.setItem('ncc_dates', JSON.stringify(dates));
       localStorage.setItem('ncc_attendance', JSON.stringify(attendance));
       render();
     }
 
-    function switchTab(tab) {
-      currentTab = tab;
-      ['parades', 'events', 'officials'].forEach(t => {
-        const btn = document.getElementById(`tab-${t}`);
-        if (t === tab) {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600 cursor-pointer";
-        } else {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer";
-        }
-      });
-      render();
-    }
-
     function addStudent() {
-      const name = prompt("Enter Cadet Name:");
-      if (!name || !name.trim()) return;
-      students.push({ id: Date.now().toString(), name: name.trim() });
-      saveAndRender();
+      const name = prompt("Enter Student Name:");
+      if (name && name.trim()) {
+        students.push({ id: Date.now().toString(), name: name.trim() });
+        saveData();
+      }
     }
 
     function deleteStudent(id) {
-      if (!confirm("Are you sure you want to delete this cadet?")) return;
-      students = students.filter(s => s.id !== id);
-      saveAndRender();
+      if (confirm("Are you sure you want to delete this student?")) {
+        students = students.filter(s => s.id !== id);
+        saveData();
+      }
     }
 
-    function addDate() {
-      const date = prompt(`Enter ${currentTab.slice(0, -1)} Date (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
-      if (!date || !date.trim()) return;
-      if (dates[currentTab].includes(date)) {
-        alert("Date already exists!");
-        return;
+    function addParadeDate() {
+      const date = prompt("Enter Parade Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+      if (date && !dates.includes(date)) {
+        dates.push(date);
+        dates.sort();
+        saveData();
       }
-      dates[currentTab].push(date);
-      dates[currentTab].sort();
-      saveAndRender();
     }
 
     function deleteDate(dateToDelete) {
-      if (!confirm(`Delete date ${dateToDelete}?`)) return;
-      dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
-      
-      // Clean up attendance record for this date
-      if (attendance[currentTab]) {
-        Object.keys(attendance[currentTab]).forEach(key => {
-          if (key.endsWith(`_${dateToDelete}`)) {
-            delete attendance[currentTab][key];
-          }
-        });
+      if (confirm(`Remove column for date ${dateToDelete}?`)) {
+        dates = dates.filter(d => d !== dateToDelete);
+        saveData();
       }
-      saveAndRender();
     }
 
     function toggleAttendance(studentId, date) {
-      if (!attendance[currentTab]) attendance[currentTab] = {};
       const key = `${studentId}_${date}`;
-      const current = attendance[currentTab][key];
+      const current = attendance[key];
 
       if (!current) {
-        attendance[currentTab][key] = 'P';
+        attendance[key] = 'P';
       } else if (current === 'P') {
-        attendance[currentTab][key] = 'A';
+        attendance[key] = 'A';
       } else {
-        delete attendance[currentTab][key];
+        delete attendance[key];
       }
-      saveAndRender();
+      saveData();
     }
 
-    function calculatePercentage(category, studentId) {
-      const catDates = dates[category] || [];
-      if (catDates.length === 0) return 0;
+    function calculatePercentage(studentId) {
+      if (dates.length === 0) return 0;
       let presentCount = 0;
       let totalConducted = 0;
 
-      catDates.forEach(d => {
-        const val = attendance[category] ? attendance[category][`${studentId}_${d}`] : '';
+      dates.forEach(d => {
+        const val = attendance[`${studentId}_${d}`];
         if (val === 'P') presentCount++;
         if (val === 'P' || val === 'A') totalConducted++;
       });
@@ -212,27 +192,29 @@
     }
 
     function exportToCSV() {
-      let csv = ["CATEGORY,SR NO,Student Name,Date,Status,Percentage"];
-      ['parades', 'events', 'officials'].forEach(cat => {
-        students.forEach((student, index) => {
-          const pct = calculatePercentage(cat, student.id);
-          (dates[cat] || []).forEach(d => {
-            const status = (attendance[cat] && attendance[cat][`${student.id}_${d}`]) || '-';
-            csv.push(`${cat.toUpperCase()},${index + 1},"${student.name}",${d},${status},${pct}%`);
-          });
+      let csv = ["SR NO,Student Name," + dates.join(",") + ",Total Percentage"];
+      
+      students.forEach((student, index) => {
+        let row = [index + 1, `"${student.name}"`];
+        dates.forEach(d => {
+          row.push(attendance[`${student.id}_${d}`] || '-');
         });
+        row.push(calculatePercentage(student.id) + "%");
+        csv.push(row.join(","));
       });
 
       let blob = new Blob([csv.join("\n")], { type: "text/csv" });
       let link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `NCC_Register_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `NCC_Attendance_Register_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
     }
 
     function getAvailableMonths() {
       const months = new Set();
-      (dates[currentTab] || []).forEach(d => months.add(d.substring(0, 7)));
+      dates.forEach(d => {
+        months.add(d.substring(0, 7)); // YYYY-MM
+      });
       return Array.from(months).sort();
     }
 
@@ -245,10 +227,12 @@
     function updateFilterDropdown() {
       const dropdown = document.getElementById('date-filter');
       if (!dropdown) return;
+
       const currentValue = dropdown.value;
       const availableMonths = getAvailableMonths();
 
-      dropdown.innerHTML = '<option value="all">Show All Dates</option>';
+      dropdown.innerHTML = '<option value="all">Show All Parades</option>';
+
       availableMonths.forEach(ym => {
         const option = document.createElement('option');
         option.value = ym;
@@ -258,8 +242,6 @@
 
       if (currentValue && [...dropdown.options].some(o => o.value === currentValue)) {
         dropdown.value = currentValue;
-      } else {
-        dropdown.value = 'all';
       }
     }
 
@@ -268,33 +250,24 @@
 
       const filterElement = document.getElementById('date-filter');
       const selectedFilter = filterElement ? filterElement.value : 'all';
-      let catDates = dates[currentTab] || [];
       let filteredDates = [];
 
       if (selectedFilter === 'all') {
-        filteredDates = catDates;
-        document.getElementById('filter-status').innerText = `Showing all ${catDates.length} dates.`;
+        filteredDates = dates;
+        document.getElementById('filter-status').innerText = `Showing all ${dates.length} parades.`;
       } else {
-        filteredDates = catDates.filter(d => d.startsWith(selectedFilter));
-        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${catDates.length} dates.`;
+        filteredDates = dates.filter(d => d.startsWith(selectedFilter));
+        const monthName = formatMonthYear(selectedFilter);
+        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${dates.length} total parades in ${monthName}.`;
       }
-      
-      const titles = { parades: 'Parade Attendance Register', events: 'Event Attendance Register', officials: 'Official Duties Attendance Register' };
-      const badges = { parades: 'Viewing Parades', events: 'Viewing Events', officials: 'Viewing Officials' };
-      const addBtnLabels = { parades: '+ Add Parade Date', events: '+ Add Event Date', officials: '+ Add Official Date' };
-      const pctLabels = { parades: 'Parade %', events: 'Event %', officials: 'Official %' };
-
-      document.getElementById('section-title').innerText = titles[currentTab];
-      document.getElementById('section-badge').innerText = badges[currentTab];
-      document.getElementById('btn-add-date').innerText = addBtnLabels[currentTab];
-      document.getElementById('header-pct-label').innerText = pctLabels[currentTab];
 
       const headerRow = document.getElementById('table-header-row');
+      
       let dateHeadersHTML = filteredDates.map(d => `
         <th class="p-3 border-r border-slate-200 min-w-[130px] text-center">
           <div class="flex items-center justify-between gap-2">
             <span>${d}</span>
-            <button onclick="deleteDate('${d}')" class="text-slate-400 hover:text-red-600 font-bold px-1 text-sm cursor-pointer" title="Delete Date">×</button>
+            <button onclick="deleteDate('${d}')" class="text-slate-400 hover:text-red-600 font-bold px-1 text-sm" title="Delete Date">×</button>
           </div>
         </th>
       `).join('');
@@ -303,54 +276,49 @@
         <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
         <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
         ${dateHeadersHTML}
-        <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">${pctLabels[currentTab]}</th>
+        <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">Total %</th>
         <th class="p-3 text-center w-20">Action</th>
       `;
 
       const rowsContainer = document.getElementById('student-rows');
-      if (students.length === 0) {
-        rowsContainer.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-slate-400">No cadets found. Click "+ Add Cadet Name" to begin.</td></tr>`;
-      } else {
-        rowsContainer.innerHTML = students.map((student, index) => {
-          const pct = calculatePercentage(currentTab, student.id);
-          const dateCells = filteredDates.map(d => {
-            const status = (attendance[currentTab] && attendance[currentTab][`${student.id}_${d}`]) || '';
-            let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
-            if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
-            if (status === 'A') bgClass = 'bg-rose-500 text-white font-bold hover:bg-rose-600';
 
-            return `
-              <td class="p-2 border-r border-slate-200 text-center">
-                <button onclick="toggleAttendance('${student.id}', '${d}')" class="w-full h-9 rounded transition text-xs flex items-center justify-center ${bgClass} cursor-pointer">
-                  ${status || '-'}
-                </button>
-              </td>
-            `;
-          }).join('');
+      rowsContainer.innerHTML = students.map((student, index) => {
+        const pct = calculatePercentage(student.id);
 
-          const pctBadge = `<span class="bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs">${pct}%</span>`;
+        const dateCells = filteredDates.map(d => {
+          const status = attendance[`${student.id}_${d}`] || '';
+          let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
+          if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
+          if (status === 'A') bgClass = 'bg-rose-500 text-white font-bold hover:bg-rose-600';
 
           return `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1">${index + 1}</td>
-              <td class="p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2">${student.name}</td>
-              ${dateCells}
-              <td class="p-3 border-l border-slate-200 bg-slate-50/50 text-center font-bold">${pctBadge}</td>
-              <td class="p-3 text-center">
-                <button onclick="deleteStudent('${student.id}')" class="text-slate-400 hover:text-red-600 text-xs cursor-pointer">Delete</button>
-              </td>
-            </tr>
+            <td class="p-2 border-r border-slate-200 text-center">
+              <button onclick="toggleAttendance('${student.id}', '${d}')" class="w-full h-9 rounded transition text-xs flex items-center justify-center ${bgClass}">
+                ${status || '-'}
+              </button>
+            </td>
           `;
         }).join('');
-      }
+
+        const pctBadge = `<span class="bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded-full text-xs">${pct}%</span>`;
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3 border-r border-slate-200 text-center font-medium text-slate-400 sticky-col-1">${index + 1}</td>
+            <td class="p-3 border-r border-slate-200 font-semibold text-slate-800 sticky-col-2">${student.name}</td>
+            ${dateCells}
+            <td class="p-3 border-l border-slate-200 bg-slate-50/50 text-center font-bold">${pctBadge}</td>
+            <td class="p-3 text-center">
+              <button onclick="deleteStudent('${student.id}')" class="text-slate-400 hover:text-red-600 text-xs">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       document.getElementById('stat-cadets').innerText = students.length;
-      document.getElementById('stat-parades').innerText = (dates.parades || []).length;
-      document.getElementById('stat-events').innerText = (dates.events || []).length;
-      document.getElementById('stat-officials').innerText = (dates.officials || []).length;
+      document.getElementById('stat-parades').innerText = dates.length;
     }
 
-    // Initial render
     render();
   </script>
 </body>
