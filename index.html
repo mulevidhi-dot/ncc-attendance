@@ -164,7 +164,7 @@
   // Supabase settings.
  
 const SUPABASE_URL =
-  'https://pdniwpvobbepipsxsktl.supabase.co/rest/v1/';
+  'https://pdniwpvobbepipsxsktl.supabase.co';
 
 const SUPABASE_ANON_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
@@ -176,11 +176,10 @@ try {
     throw new Error('Supabase library did not load.');
   }
 
-  db = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
+ db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
   console.log('Supabase client initialized.');
 } catch (error) {
   console.error('Supabase initialization failed:', error);
