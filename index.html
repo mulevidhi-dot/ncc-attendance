@@ -4,30 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCC Battalion Attendance Register</title>
-  <!-- Tailwind CSS CDN -->
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
-    /* Freeze # and Student Name columns while scrolling dates horizontally */
     .sticky-col-1 {
       position: sticky;
       left: 0;
       z-index: 10;
-      background-color: #ffffff;
+      background-color: white;
+      min-width: 48px;
     }
+
     .sticky-col-2 {
       position: sticky;
-      left: 48px; /* Width of the # column */
+      left: 48px;
       z-index: 10;
-      background-color: #ffffff;
+      background-color: white;
     }
+
     .sticky-header-1 {
       position: sticky;
       left: 0;
       z-index: 20;
       background-color: #f8fafc;
     }
+
     .sticky-header-2 {
       position: sticky;
       left: 48px;
@@ -36,424 +39,45 @@
     }
   </style>
 </head>
+
 <body class="bg-slate-100 min-h-screen text-slate-800 p-4 md:p-8">
 
-  <div class="max-w-7xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
-          <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
-          <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
-          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Candidate Attendance Register</h1>
-        </div>
-        <p class="text-sm text-slate-500 mt-1" id="connection-status">Running Local & Cloud Hybrid Mode</p>
-      </div>
+<div class="max-w-7xl mx-auto space-y-6">
 
-      <div class="flex flex-wrap gap-2">
-        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition cursor-pointer">
-          + Add Cadet Name
-        </button>
-        <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition cursor-pointer" id="btn-add-date">
-          + Add Date
-        </button>
-        <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition cursor-pointer">
-          📥 Export CSV
-        </button>
+  <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="w-3 h-3 bg-red-600 rounded-full"></span>
+        <span class="w-3 h-3 bg-blue-900 rounded-full"></span>
+        <span class="w-3 h-3 bg-sky-400 rounded-full"></span>
+        <h1 class="text-2xl font-bold text-slate-900 ml-2">
+          NCC Candidate Attendance Register
+        </h1>
       </div>
-    </header>
-
-    <!-- Stats Bar -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Cadets</p>
-        <p id="stat-cadets" class="text-2xl font-bold text-slate-800 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Parade Dates</p>
-        <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Dates</p>
-        <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
-      </div>
-      <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Official Dates</p>
-        <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
-      </div>
+      <p id="connection-status" class="text-sm text-slate-500 mt-2">
+        Starting register...
+      </p>
     </div>
 
-    <!-- Navigation Tabs -->
-    <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4">
-      <button onclick="switchTab('parades')" id="tab-parades" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600 cursor-pointer">🛡️ Parades</button>
-      <button onclick="switchTab('events')" id="tab-events" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer">🎖️ Events</button>
-      <button onclick="switchTab('officials')" id="tab-officials" class="pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer">📋 Officials</button>
+    <div class="flex flex-wrap gap-2">
+      <button onclick="addStudent()"
+        class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
+        + Add Cadet Name
+      </button>
+
+      <button id="btn-add-date" onclick="addDate()"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+        + Add Parade Date
+      </button>
+
+      <button onclick="exportToCSV()"
+        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm">
+        📥 Export CSV
+      </button>
     </div>
+  </header>
 
-    <!-- Filter Bar -->
-    <div class="bg-white rounded-none shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Dates by Month:</label>
-        <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
-          <option value="all">Show All Dates</option>
-        </select>
-      </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Ready</p>
-    </div>
-
-    <!-- Main Spreadsheet Table -->
-    <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 overflow-hidden">
-      <div class="overflow-x-auto max-w-full">
-        <table class="w-full text-left border-collapse min-w-max">
-          <thead>
-            <tr id="table-header-row" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
-              <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
-              <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-              <!-- Dynamic Date Columns inserted here -->
-              <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28" id="header-pct-label">Total %</th>
-              <th class="p-3 text-center w-20">Action</th>
-            </tr>
-          </thead>
-          <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-            <tr><td colspan="4" class="text-center p-6 text-slate-400">Loading register...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    // --- SUPABASE CONFIGURATION ---
-    const SUPABASE_URL = 'https://pdniwpvobbbepipsxskt.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
-
-    let db = null;
-    try {
-      const { createClient } = supabase;
-      db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (e) {
-      console.warn("Supabase client failed to initialize.");
-    }
-
-    let currentTab = 'parades';
-
-    let storedStudents = JSON.parse(localStorage.getItem('ncc_students'));
-    let students = (storedStudents && storedStudents.length > 0) ? storedStudents : [
-      { id: '1', name: 'Ansh' },
-      { id: '2', name: 'Pawan' },
-      { id: '3', name: 'Pranav' }
-    ];
-
-    let storedDates = JSON.parse(localStorage.getItem('ncc_dates'));
-    let dates = storedDates || {
-      parades: ['2026-05-19', '2026-05-26'],
-      events: ['2026-06-01'],
-      officials: ['2026-06-10']
-    };
-
-    let storedAttendance = JSON.parse(localStorage.getItem('ncc_attendance'));
-    let attendance = storedAttendance || {
-      parades: { '1_2026-05-19': 'P' },
-      events: {},
-      officials: {}
-    };
-
-    function saveLocal() {
-      localStorage.setItem('ncc_students', JSON.stringify(students));
-      localStorage.setItem('ncc_dates', JSON.stringify(dates));
-      localStorage.setItem('ncc_attendance', JSON.stringify(attendance));
-    }
-
-    // Attempt to load from cloud safely in the background
-    async function loadDataFromCloud() {
-      if (!db) {
-        render();
-        return;
-      }
-      try {
-        document.getElementById('connection-status').innerText = "Syncing with Supabase...";
-        const { data: cadetData, error: cadetErr } = await db.from('cadets').select('*');
-        if (!cadetErr && cadetData && cadetData.length > 0) {
-          students = cadetData;
-        }
-
-        const { data: attData, error: attErr } = await db.from('attendance').select('*');
-        if (!attData && attErr) throw attErr;
-
-        if (attData && attData.length > 0) {
-          dates = { parades: [], events: [], officials: [] };
-          attendance = { parades: {}, events: {}, officials: {} };
-
-          attData.forEach(row => {
-            const cat = row.category;
-            if (row.type === 'date') {
-              if (dates[cat] && !dates[cat].includes(row.date_str)) {
-                dates[cat].push(row.date_str);
-              }
-            } else if (row.type === 'record') {
-              if (attendance[cat]) {
-                attendance[cat][`${row.cadet_id}_${row.date_str}`] = row.status;
-              }
-            }
-          });
-          Object.keys(dates).forEach(cat => dates[cat].sort());
-        }
-        document.getElementById('connection-status').innerText = "Cloud Sync Active • Connected";
-      } catch (err) {
-        console.warn("Cloud sync skipped, using instant local mode:", err);
-        document.getElementById('connection-status').innerText = "Local Mode Active (Fully Functional)";
-      }
-      saveLocal();
-      render();
-    }
-
-    function switchTab(tab) {
-      currentTab = tab;
-      ['parades', 'events', 'officials'].forEach(t => {
-        const btn = document.getElementById(`tab-\${t}`);
-        if (t === tab) {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-blue-600 border-blue-600 cursor-pointer";
-        } else {
-          btn.className = "pb-3 px-4 font-bold text-sm border-b-2 transition text-slate-500 border-transparent hover:text-slate-800 cursor-pointer";
-        }
-      });
-      render();
-    }
-
-    async function addStudent() {
-      const name = prompt("Enter Student Name:");
-      if (!name || !name.trim()) return;
-
-      const newCadet = { id: Date.now().toString(), name: name.trim() };
-      students.push(newCadet);
-      saveLocal();
-      render();
-
-      if (db) {
-        db.from('cadets').insert([newCadet]).catch(e => console.log("Cloud insert skipped"));
-      }
-    }
-
-    async function deleteStudent(id) {
-      if (!confirm("Are you sure you want to delete this student?")) return;
-      students = students.filter(s => s.id !== id);
-      saveLocal();
-      render();
-
-      if (db) {
-        db.from('cadets').delete().eq('id', id).catch(e => {});
-        db.from('attendance').delete().eq('cadet_id', id).catch(e => {});
-      }
-    }
-
-    async function addDate() {
-      const label = currentTab.slice(0, -1);
-      const date = prompt(`Enter \${label} Date (YYYY-MM-DD):`, new Date().toISOString().split('T')[0]);
-      if (!date || dates[currentTab].includes(date)) return;
-
-      dates[currentTab].push(date);
-      dates[currentTab].sort();
-      saveLocal();
-      render();
-
-      if (db) {
-        db.from('attendance').insert([{
-          name: `${currentTab}_date_${date}`,
-          category: currentTab,
-          type: 'date',
-          date_str: date
-        }]).catch(e => console.log("Cloud date insert skipped"));
-      }
-    }
-
-    async function deleteDate(dateToDelete) {
-      if (!confirm(`Remove column for date \${dateToDelete}?`)) return;
-
-      dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
-      if (attendance[currentTab]) {
-        Object.keys(attendance[currentTab]).forEach(k => {
-          if (k.endsWith(`_\${dateToDelete}`)) delete attendance[currentTab][k];
-        });
-      }
-      saveLocal();
-      render();
-
-      if (db) {
-        db.from('attendance').delete().match({ category: currentTab, date_str: dateToDelete }).catch(e => {});
-      }
-    }
-
-    async function toggleAttendance(studentId, date) {
-      if (!attendance[currentTab]) attendance[currentTab] = {};
-      const key = `${studentId}_${date}`;
-      const current = attendance[currentTab][key];
-
-      let nextStatus = '';
-      if (!current) nextStatus = 'P';
-      else if (current === 'P') nextStatus = 'A';
-      else nextStatus = '';
-
-      if (nextStatus === '') {
-        delete attendance[currentTab][key];
-      } else {
-        attendance[currentTab][key] = nextStatus;
-      }
-      saveLocal();
-      render();
-
-      if (db) {
-        db.from('attendance').delete().match({ category: currentTab, type: 'record', cadet_id: studentId, date_str: date }).then(() => {
-          if (nextStatus !== '') {
-            const studentObj = students.find(s => s.id === studentId);
-            const cadetName = studentObj ? studentObj.name : 'Unknown';
-            db.from('attendance').insert([{
-              name: `${cadetName}_${date}`,
-              category: currentTab,
-              type: 'record',
-              cadet_id: studentId,
-              date_str: date,
-              status: nextStatus
-            }]).catch(e => {});
-          }
-        }).catch(e => {});
-      }
-    }
-
-    function calculatePercentage(category, studentId) {
-      const catDates = dates[category] || [];
-      if (catDates.length === 0) return 0;
-      let presentCount = 0;
-      let totalConducted = 0;
-
-      catDates.forEach(d => {
-        const val = attendance[category] ? attendance[category][`${studentId}_${d}`] : '';
-        if (val === 'P') presentCount++;
-        if (val === 'P' || val === 'A') totalConducted++;
-      });
-
-      if (totalConducted === 0) return 0;
-      return Math.round((presentCount / totalConducted) * 100);
-    }
-
-    function exportToCSV() {
-      let csv = ["CATEGORY,SR NO,Student Name,Date,Status,Percentage"];
-      ['parades', 'events', 'officials'].forEach(cat => {
-        const catDates = dates[cat] || [];
-        students.forEach((student, index) => {
-          const pct = calculatePercentage(cat, student.id);
-          catDates.forEach(d => {
-            const status = (attendance[cat] && attendance[cat][`${student.id}_${d}`]) || '-';
-            csv.push(`${cat.toUpperCase()},${index + 1},"${student.name}",${d},${status},${pct}%`);
-          });
-        });
-      });
-
-      let blob = new Blob([csv.join("\n")], { type: "text/csv" });
-      let link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `NCC_Register_\${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-    }
-
-    function getAvailableMonths() {
-      const months = new Set();
-      (dates[currentTab] || []).forEach(d => {
-        months.add(d.substring(0, 7)); // YYYY-MM
-      });
-      return Array.from(months).sort();
-    }
-
-    function formatMonthYear(ymString) {
-      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      const parts = ymString.split('-');
-      return `${months[parseInt(parts[1]) - 1]}${parts[0]}`;
-    }
-
-    function updateFilterDropdown() {
-      const dropdown = document.getElementById('date-filter');
-      if (!dropdown) return;
-
-      const currentValue = dropdown.value;
-      const availableMonths = getAvailableMonths();
-
-      dropdown.innerHTML = '<option value="all">Show All Dates</option>';
-
-      availableMonths.forEach(ym => {
-        const option = document.createElement('option');
-        option.value = ym;
-        option.innerText = formatMonthYear(ym);
-        dropdown.appendChild(option);
-      });
-
-      if (currentValue && [...dropdown.options].some(o => o.value === currentValue)) {
-        dropdown.value = currentValue;
-      }
-    }
-
-    function render() {
-      updateFilterDropdown();
-
-      const filterElement = document.getElementById('date-filter');
-      const selectedFilter = filterElement ? filterElement.value : 'all';
-      let catDates = dates[currentTab] || [];
-      let filteredDates = [];
-
-      if (selectedFilter === 'all') {
-        filteredDates = catDates;
-        document.getElementById('filter-status').innerText = `Showing all \${catDates.length} dates.`;
-      } else {
-        filteredDates = catDates.filter(d => d.startsWith(selectedFilter));
-        const monthName = formatMonthYear(selectedFilter);
-        document.getElementById('filter-status').innerText = `Showing \${filteredDates.length} of ${catDates.length} total dates in${monthName}.`;
-      }
-
-      const addBtnLabels = { parades: '+ Add Parade Date', events: '+ Add Event Date', officials: '+ Add Official Date' };
-      const pctLabels = { parades: 'Parade %', events: 'Event %', officials: 'Official %' };
-      document.getElementById('btn-add-date').innerText = addBtnLabels[currentTab];
-      document.getElementById('header-pct-label').innerText = pctLabels[currentTab];
-
-      const headerRow = document.getElementById('table-header-row');
-      let dateHeadersHTML = filteredDates.map(d => `
-        <th class="p-3 border-r border-slate-200 min-w-[130px] text-center">
-          <div class="flex items-center justify-between gap-2">
-            <span>\${d}</span>
-            <button onclick="deleteDate('\${d}')" class="text-slate-400 hover:text-red-600 font-bold px-1 text-sm cursor-pointer" title="Delete Date">×</button>
-          </div>
-        </th>
-      `).join('');
-
-      headerRow.innerHTML = `
-        <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
-        <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-        \${dateHeadersHTML}
-        <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">\${pctLabels[currentTab]}</th>
-        <th class="p-3 text-center w-20">Action</th>
-      `;
-
-      const rowsContainer = document.getElementById('student-rows');
-
-      if (students.length === 0) {
-        rowsContainer.innerHTML = `<tr><td colspan="4" class="text-center p-6 text-slate-400">No cadets found. Click "+ Add Cadet Name" to begin.</td></tr>`;
-      } else {
-        rowsContainer.innerHTML = students.map((student, index) => {
-          const pct = calculatePercentage(currentTab, student.id);
-
-          const dateCells = filteredDates.map(d => {
-            const status = (attendance[currentTab] && attendance[currentTab][`${student.id}_${d}`]) || '';
-            let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
-            if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
-            if (status === 'A') bgClass = 'bg-rose-500 text-white font-bold hover:bg-rose-600';
-
-            return `
-              <td class="p-2 border-r border-slate-200 text-center">
-                <button onclick="toggleAttendance('${student.id}', '${d}')" class="w-full h-9 rounded transition text-xs flex items-center justify-center \${bgClass} cursor-pointer">
-                  \${status || '-'}
-                </button>
-              </td>
-            `;
-          }).join('');
-
-          const pctBadge = `<span class="bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded
+  <!-- Statistics -->
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div class="bg-white p-4 rounded-xl border shadow-sm">
+      <p class="text-xs font-semibold text-slate-
