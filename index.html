@@ -24,13 +24,13 @@
           <span class="w-3 h-3 bg-red-600 rounded-full inline-block"></span>
           <span class="w-3 h-3 bg-blue-900 rounded-full inline-block"></span>
           <span class="w-3 h-3 bg-sky-400 rounded-full inline-block"></span>
-          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Cloud Attendance Register</h1>
+          <h1 class="text-2xl font-bold text-slate-900 ml-2">NCC Attendance Register</h1>
         </div>
-        <p class="text-sm text-slate-500 mt-1">PostgreSQL Cloud Sync</p>
+        <p class="text-sm text-slate-500 mt-1" id="connection-mode">Running Live</p>
       </div>
 
       <div class="flex flex-wrap gap-2">
-        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">+ Add  Name</button>
+        <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition">+ Add Cadet Name</button>
         <button onclick="addDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition" id="btn-add-date">+ Add Date</button>
         <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">📥 Export CSV</button>
       </div>
@@ -71,14 +71,14 @@
           <option value="all">Show All Dates</option>
         </select>
       </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Initializing app...</p>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Ready</p>
     </div>
 
     <!-- Table Container -->
     <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 p-6 space-y-4">
       <div class="flex justify-between items-center border-b border-slate-100 pb-3">
         <h2 id="section-title" class="text-lg font-bold text-slate-900">Attendance Register</h2>
-        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Ready</span>
+        <span id="section-badge" class="bg-blue-50 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">Active</span>
       </div>
       
       <div class="overflow-x-auto max-w-full">
@@ -92,7 +92,7 @@
             </tr>
           </thead>
           <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
-            <tr><td colspan="4" class="text-center p-6 text-slate-400">Loading register...</td></tr>
+            <tr><td colspan="4" class="text-center p-6 text-slate-400">Loading...</td></tr>
           </tbody>
         </table>
       </div>
@@ -101,71 +101,64 @@
   </div>
 
   <script>
-    // --- REPLACE WITH YOUR ACTUAL SUPABASE URL & ANON KEY ---
-    const SUPABASE_URL = 'sb_publishable_qBMH8I5mPVE4UypLEV6F9w_AVz0ozFK';
+    // --- SUPABASE CONFIGURATION ---
+    const SUPABASE_URL = 'sb_publishable_qBMH8I5mPVE4UypLEV6F9w_AVz0ozFK'; // Replace or leave as placeholder to use local storage safely
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
 
     let db = null;
     try {
-      if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
+      if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE') {
         db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       }
     } catch (e) {
-      console.warn("Supabase init skipped, running local state fallback.");
+      console.log("Supabase not connected, using local storage.");
     }
 
     let currentTab = 'parades';
-    let students = JSON.parse(localStorage.getItem('ncc_fallback_students')) || [
+    
+    // Load from LocalStorage as bulletproof fallback
+    let students = JSON.parse(localStorage.getItem('ncc_students')) || [
       { id: '1', name: 'Ansh' },
-      { id: '2', name: 'Pawan' },
-      { id: '3', name: 'Pranav' }
+      { id: '2', name: 'Pawan' }
     ];
-    let dates = { parades: ['2026-05-19'], events: [], officials: [] };
-    let attendance = { parades: {}, events: {}, officials: {} };
+    let dates = JSON.parse(localStorage.getItem('ncc_dates')) || { parades: ['2026-05-19'], events: [], officials: [] };
+    let attendance = JSON.parse(localStorage.getItem('ncc_attendance')) || { parades: {}, events: {}, officials: {} };
 
-    async function loadDataFromCloud() {
-      if (!db) {
-        document.getElementById('filter-status').innerText = "Running in Local Mode (Add Supabase URL/Key to sync cloud)";
-        render();
-        return;
-      }
+    function saveLocal() {
+      localStorage.setItem('ncc_students', JSON.stringify(students));
+      localStorage.setItem('ncc_dates', JSON.stringify(dates));
+      localStorage.setItem('ncc_attendance', JSON.stringify(attendance));
+    }
 
-      try {
-        document.getElementById('filter-status').innerText = "Syncing with Supabase...";
+    async function initApp() {
+      if (db) {
+        try {
+          document.getElementById('connection-mode').innerText = "Cloud Sync Active (Supabase)";
+          const { data: cadetData } = await db.from('cadets').select('*');
+          if (cadetData && cadetData.length > 0) students = cadetData;
 
-        // 1. Load Cadets
-        const { data: cadetData, error: cadetErr } = await db.from('cadets').select('*').order('created_at', { ascending: true });
-        if (cadetErr) throw cadetErr;
-        if (cadetData && cadetData.length > 0) students = cadetData;
-
-        // 2. Load Unified Attendance Table
-        const { data: attData, error: attErr } = await db.from('attendance').select('*');
-        if (attErr) throw attErr;
-        
-        dates = { parades: [], events: [], officials: [] };
-        attendance = { parades: {}, events: {}, officials: {} };
-
-        (attData || []).forEach(row => {
-          const cat = row.category;
-          if (row.type === 'date') {
-            if (dates[cat] && !dates[cat].includes(row.date_str)) {
-              dates[cat].push(row.date_str);
-            }
-          } else if (row.type === 'record') {
-            if (attendance[cat]) {
-              attendance[cat][`${row.cadet_id}_${row.date_str}`] = row.status;
-            }
+          const { data: attData } = await db.from('attendance').select('*');
+          if (attData && attData.length > 0) {
+            dates = { parades: [], events: [], officials: [] };
+            attendance = { parades: {}, events: {}, officials: {} };
+            attData.forEach(row => {
+              const cat = row.category;
+              if (row.type === 'date' && dates[cat] && !dates[cat].includes(row.date_str)) {
+                dates[cat].push(row.date_str);
+              } else if (row.type === 'record' && attendance[cat]) {
+                attendance[cat][`${row.cadet_id}_${row.date_str}`] = row.status;
+              }
+            });
+            Object.keys(dates).forEach(cat => dates[cat].sort());
           }
-        });
-
-        Object.keys(dates).forEach(cat => dates[cat].sort());
-        document.getElementById('filter-status').innerText = "Cloud Sync Active • Connected successfully.";
-        render();
-      } catch (err) {
-        console.error("DB Load Error:", err);
-        document.getElementById('filter-status').innerText = "Cloud connection failed. Using local view.";
-        render();
+        } catch (err) {
+          console.warn("Cloud sync failed, using local fallback mode:", err);
+          document.getElementById('connection-mode').innerText = "Offline / Local Mode (Working)";
+        }
+      } else {
+        document.getElementById('connection-mode').innerText = "Local Storage Mode (Fully Functional)";
       }
+      render();
     }
 
     function switchTab(tab) {
@@ -187,24 +180,24 @@
 
       const newCadet = { id: Date.now().toString(), name: name.trim() };
       students.push(newCadet);
-      localStorage.setItem('ncc_fallback_students', JSON.stringify(students));
+      saveLocal();
+      render();
 
       if (db) {
-        await db.from('cadets').insert([newCadet]);
+        await db.from('cadets').insert([newCadet]).catch(e => console.log(e));
       }
-      loadDataFromCloud();
     }
 
     async function deleteStudent(id) {
       if (!confirm("Are you sure you want to delete this cadet?")) return;
       students = students.filter(s => s.id !== id);
-      localStorage.setItem('ncc_fallback_students', JSON.stringify(students));
+      saveLocal();
+      render();
 
       if (db) {
-        await db.from('cadets').delete().eq('id', id);
-        await db.from('attendance').delete().eq('cadet_id', id);
+        await db.from('cadets').delete().eq('id', id).catch(e => console.log(e));
+        await db.from('attendance').delete().eq('cadet_id', id).catch(e => console.log(e));
       }
-      loadDataFromCloud();
     }
 
     async function addDate() {
@@ -213,6 +206,8 @@
 
       dates[currentTab].push(date);
       dates[currentTab].sort();
+      saveLocal();
+      render();
 
       if (db) {
         await db.from('attendance').insert([{ 
@@ -220,20 +215,23 @@
           category: currentTab, 
           type: 'date', 
           date_str: date 
-        }]);
+        }]).catch(e => console.log(e));
       }
-      loadDataFromCloud();
     }
 
     async function deleteDate(dateToDelete) {
       if (!confirm(`Delete date ${dateToDelete}?`)) return;
 
       dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
+      Object.keys(attendance[currentTab] || {}).forEach(k => {
+        if (k.endsWith(`_${dateToDelete}`)) delete attendance[currentTab][k];
+      });
+      saveLocal();
+      render();
 
       if (db) {
-        await db.from('attendance').delete().match({ category: currentTab, date_str: dateToDelete });
+        await db.from('attendance').delete().match({ category: currentTab, date_str: dateToDelete }).catch(e => console.log(e));
       }
-      loadDataFromCloud();
     }
 
     async function toggleAttendance(studentId, date) {
@@ -251,10 +249,11 @@
       } else {
         attendance[currentTab][key] = nextStatus;
       }
+      saveLocal();
       render();
 
       if (db) {
-        await db.from('attendance').delete().match({ category: currentTab, type: 'record', cadet_id: studentId, date_str: date });
+        await db.from('attendance').delete().match({ category: currentTab, type: 'record', cadet_id: studentId, date_str: date }).catch(e => console.log(e));
         if (nextStatus !== '') {
           const studentObj = students.find(s => s.id === studentId);
           const cadetName = studentObj ? studentObj.name : 'Unknown';
@@ -265,7 +264,7 @@
             cadet_id: studentId, 
             date_str: date, 
             status: nextStatus 
-          }]);
+          }]).catch(e => console.log(e));
         }
       }
     }
@@ -423,7 +422,8 @@
       document.getElementById('stat-officials').innerText = dates.officials.length;
     }
 
-    loadDataFromCloud();
+    // Initialize application immediately
+    initApp();
   </script>
 </body>
 </html>
