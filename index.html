@@ -387,16 +387,17 @@ function addDate() {
     String(today.getDate()).padStart(2, "0")
   ].join("-");
 
-  const date = prompt("Enter " + currentTab.slice(0, -1) + " date (YYYY-MM-DD):", localToday);
-  if (date === null) return;
+  const input = prompt("Enter date (YYYY-MM-DD):", localToday);
+  if (input === null) return;
 
+  const date = input.trim();
   if (!isValidDate(date)) {
     alert("Please enter a valid date in YYYY-MM-DD format.");
     return;
   }
 
   if (dates[currentTab].includes(date)) {
-    alert("This date already exists in this category.");
+    alert("This date already exists in this tab.");
     return;
   }
 
