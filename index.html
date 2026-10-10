@@ -9,33 +9,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    .sticky-col-1 {
-      position: sticky;
-      left: 0;
-      z-index: 10;
-      background-color: white;
-      min-width: 48px;
-    }
-
-    .sticky-col-2 {
-      position: sticky;
-      left: 48px;
-      z-index: 10;
-      background-color: white;
-    }
-
+    .sticky-col-1,
     .sticky-header-1 {
       position: sticky;
       left: 0;
-      z-index: 20;
-      background-color: #f8fafc;
+      z-index: 10;
+      background: #fff;
+      min-width: 48px;
     }
 
+    .sticky-col-2,
     .sticky-header-2 {
       position: sticky;
       left: 48px;
+      z-index: 10;
+      background: #fff;
+    }
+
+    .sticky-header-1,
+    .sticky-header-2 {
       z-index: 20;
-      background-color: #f8fafc;
+      background: #f8fafc;
     }
   </style>
 </head>
@@ -50,10 +44,12 @@
         <span class="w-3 h-3 bg-red-600 rounded-full"></span>
         <span class="w-3 h-3 bg-blue-900 rounded-full"></span>
         <span class="w-3 h-3 bg-sky-400 rounded-full"></span>
+
         <h1 class="text-2xl font-bold text-slate-900 ml-2">
           NCC Candidate Attendance Register
         </h1>
       </div>
+
       <p id="connection-status" class="text-sm text-slate-500 mt-2">
         Starting register...
       </p>
@@ -72,105 +68,114 @@
 
       <button onclick="exportToCSV()"
         class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm">
-        📥 Export CSV
+        Export CSV
       </button>
     </div>
   </header>
 
-  <!-- Statistics -->
   <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-    <div class="bg-white p-4 rounded-xl border shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase">Total Cadets</p>
+
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Total Cadets (this tab)
+      </p>
       <p id="stat-cadets" class="text-2xl font-bold mt-1">0</p>
     </div>
 
-    <div class="bg-white p-4 rounded-xl border shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase">Parade Dates</p>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Parade Dates
+      </p>
       <p id="stat-parades" class="text-2xl font-bold text-blue-600 mt-1">0</p>
     </div>
 
-    <div class="bg-white p-4 rounded-xl border shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase">Event Dates</p>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Event Dates
+      </p>
       <p id="stat-events" class="text-2xl font-bold text-amber-600 mt-1">0</p>
     </div>
 
-    <div class="bg-white p-4 rounded-xl border shadow-sm">
-      <p class="text-xs font-semibold text-slate-400 uppercase">Official Dates</p>
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+      <p class="text-xs font-semibold text-slate-400 uppercase">
+        Official Dates
+      </p>
       <p id="stat-officials" class="text-2xl font-bold text-purple-600 mt-1">0</p>
     </div>
+
   </div>
 
-  <!-- Tabs -->
-  <div class="flex border-b bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4 overflow-x-auto">
+  <div class="flex border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-4 overflow-x-auto">
+
     <button onclick="switchTab('parades')" id="tab-parades"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600 whitespace-nowrap">
-      🛡️ Parades
+      Parades
     </button>
 
     <button onclick="switchTab('events')" id="tab-events"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap">
-      🎖️ Events
+      Events
     </button>
 
     <button onclick="switchTab('officials')" id="tab-officials"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap">
-      📋 Officials
+      Officials
     </button>
+
   </div>
 
-  <!-- Month Filter -->
-  <div class="bg-white shadow-sm border-x px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+  <div class="bg-white shadow-sm border-x border-slate-200 px-6 py-3 flex flex-col md:flex-row justify-between items-center gap-4">
+
     <div class="flex items-center gap-3">
       <label for="date-filter" class="text-sm font-medium text-slate-600">
         Filter Dates by Month:
       </label>
 
       <select id="date-filter" onchange="render()"
-        class="bg-slate-50 border rounded-lg px-3 py-2 text-sm">
+        class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
         <option value="all">Show All Dates</option>
       </select>
     </div>
 
     <p id="filter-status" class="text-sm text-slate-500">Ready</p>
+
   </div>
 
-  <!-- Attendance Table -->
-  <div class="bg-white rounded-b-xl shadow-sm border overflow-hidden">
+  <div class="bg-white rounded-b-xl shadow-sm border border-slate-200 overflow-hidden">
     <div class="overflow-x-auto max-w-full">
+
       <table class="w-full text-left border-collapse min-w-max">
         <thead>
           <tr id="table-header-row"
-            class="bg-slate-50 border-b text-xs font-semibold text-slate-600">
+            class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
           </tr>
         </thead>
 
-        <tbody id="student-rows" class="divide-y text-sm">
-          <tr>
-            <td class="text-center p-6 text-slate-400">
-              Loading register...
-            </td>
-          </tr>
+        <tbody id="student-rows" class="divide-y divide-slate-200 text-sm">
         </tbody>
       </table>
+
     </div>
   </div>
 
 </div>
 
 <script>
-  // ==========================================
-  // SUPABASE CONFIGURATION
-  // ==========================================
-
-  const SUPABASE_URL = 'https://pdniwpvobbbepipsxskt.supabase.co';
+  // Supabase settings.
+  // Paste your existing public anon key below if you want cloud syncing.
+  const SUPABASE_URL =
+    'https://pdniwpvobbbepipsxskt.supabase.co';
 
   const SUPABASE_ANON_KEY =
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwcHhza3RsIiwicm9sZSI6IkFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
+    'PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE';
 
   let db = null;
 
   try {
-    if (window.supabase) {
+    if (
+      window.supabase &&
+      SUPABASE_ANON_KEY !== 'PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE'
+    ) {
       db = window.supabase.createClient(
         SUPABASE_URL,
         SUPABASE_ANON_KEY
@@ -180,31 +185,59 @@
     console.error('Supabase initialization failed:', error);
   }
 
-  // ==========================================
-  // LOCAL DATA
-  // ==========================================
+  const CATEGORIES = ['parades', 'events', 'officials'];
 
   let currentTab = 'parades';
 
   function readLocalJSON(key, fallback) {
     try {
-      const value = localStorage.getItem(key);
-      return value ? JSON.parse(value) : fallback;
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
     } catch (error) {
-      console.warn('Unable to read local data:', key, error);
+      console.warn('Could not read saved data:', key, error);
       return fallback;
     }
   }
 
-  let students = readLocalJSON('ncc_students', null);
-
-  if (!Array.isArray(students)) {
-    students = [
+  // Each tab has its own separate cadet list.
+  const defaultStudents = {
+    parades: [
       { id: '1', name: 'Ansh' },
       { id: '2', name: 'Pawan' },
       { id: '3', name: 'Pranav' }
-    ];
+    ],
+
+    events: [],
+
+    officials: []
+  };
+
+  let studentsByCategory = readLocalJSON(
+    'ncc_students_by_category',
+    null
+  );
+
+  // Migrate an older shared list into the Parades tab.
+  if (!studentsByCategory || typeof studentsByCategory !== 'object') {
+    const oldStudents = readLocalJSON('ncc_students', null);
+
+    studentsByCategory = {
+      parades:
+        Array.isArray(oldStudents) && oldStudents.length
+          ? oldStudents
+          : defaultStudents.parades,
+
+      events: [],
+
+      officials: []
+    };
   }
+
+  CATEGORIES.forEach(category => {
+    if (!Array.isArray(studentsByCategory[category])) {
+      studentsByCategory[category] = [];
+    }
+  });
 
   let dates = readLocalJSON('ncc_dates', {
     parades: ['2026-05-19', '2026-05-26'],
@@ -213,63 +246,98 @@
   });
 
   let attendance = readLocalJSON('ncc_attendance', {
-    parades: { '1_2026-05-19': 'P' },
+    parades: {
+      '1_2026-05-19': 'P'
+    },
+
     events: {},
+
     officials: {}
   });
 
-  ['parades', 'events', 'officials'].forEach(category => {
+  CATEGORIES.forEach(category => {
     if (!Array.isArray(dates[category])) {
       dates[category] = [];
     }
 
-    if (!attendance[category] || typeof attendance[category] !== 'object') {
+    if (
+      !attendance[category] ||
+      typeof attendance[category] !== 'object'
+    ) {
       attendance[category] = {};
     }
   });
 
+  function getCurrentStudents() {
+    return studentsByCategory[currentTab];
+  }
+
   function saveLocal() {
     try {
-      localStorage.setItem('ncc_students', JSON.stringify(students));
-      localStorage.setItem('ncc_dates', JSON.stringify(dates));
-      localStorage.setItem('ncc_attendance', JSON.stringify(attendance));
+      localStorage.setItem(
+        'ncc_students_by_category',
+        JSON.stringify(studentsByCategory)
+      );
+
+      localStorage.setItem(
+        'ncc_dates',
+        JSON.stringify(dates)
+      );
+
+      localStorage.setItem(
+        'ncc_attendance',
+        JSON.stringify(attendance)
+      );
     } catch (error) {
-      alert('Unable to save local data. Check your browser storage.');
-      console.error(error);
+      console.error('Local save failed:', error);
+      alert('Unable to save data in this browser.');
     }
   }
 
-  // ==========================================
-  // CLOUD LOADING
-  // ==========================================
-
   async function loadDataFromCloud() {
     if (!db) {
-      document.getElementById('connection-status').innerText =
-        'Local Mode Active';
+      document.getElementById('connection-status').textContent =
+        'Local Mode Active (saved in this browser)';
+
       render();
       return;
     }
 
-    document.getElementById('connection-status').innerText =
-      'Connecting to Supabase...';
+    document.getElementById('connection-status').textContent =
+      'Syncing with Supabase...';
 
     try {
-      const { data: cadetData, error: cadetError } =
-        await db.from('cadets').select('*');
+      const {
+        data: cadetData,
+        error: cadetError
+      } = await db.from('cadets').select('*');
 
       if (cadetError) throw cadetError;
 
-      if (cadetData && cadetData.length > 0) {
-        students = cadetData;
+      if (Array.isArray(cadetData)) {
+        CATEGORIES.forEach(category => {
+          const categoryRows = cadetData.filter(
+            row => row.category === category
+          );
+
+          if (categoryRows.length) {
+            studentsByCategory[category] = categoryRows.map(row => ({
+              id: String(row.id),
+              name: row.name,
+              category
+            }));
+          }
+        });
       }
 
-      const { data: attendanceData, error: attendanceError } =
-        await db.from('attendance').select('*');
+      const {
+        data: attData,
+        error: attError
+      } = await db.from('attendance').select('*');
 
-      if (attendanceError) throw attendanceError;
+      if (attError) throw attError;
 
-      if (attendanceData && attendanceData.length > 0) {
+      if (Array.isArray(attData) && attData.length) {
         dates = {
           parades: [],
           events: [],
@@ -282,162 +350,174 @@
           officials: {}
         };
 
-        attendanceData.forEach(row => {
+        attData.forEach(row => {
           const category = row.category;
 
-          if (!dates[category] || !attendance[category]) return;
+          if (!CATEGORIES.includes(category)) return;
 
-          if (row.type === 'date') {
-            if (!dates[category].includes(row.date_str)) {
-              dates[category].push(row.date_str);
-            }
-          }
-
-          if (row.type === 'record') {
+          if (
+            row.type === 'date' &&
+            row.date_str &&
+            !dates[category].includes(row.date_str)
+          ) {
+            dates[category].push(row.date_str);
+          } else if (
+            row.type === 'record' &&
+            row.date_str &&
+            row.cadet_id != null
+          ) {
             attendance[category][
               `${row.cadet_id}_${row.date_str}`
             ] = row.status;
           }
         });
 
-        Object.keys(dates).forEach(category => {
-          dates[category].sort();
-        });
+        CATEGORIES.forEach(category => dates[category].sort());
       }
 
       saveLocal();
 
-      document.getElementById('connection-status').innerText =
-        'Cloud Sync Active • Connected';
+      document.getElementById('connection-status').textContent =
+        'Cloud Sync Active';
 
     } catch (error) {
-      console.error('Cloud loading failed:', error);
+      console.error('Cloud sync failed:', error);
 
-      document.getElementById('connection-status').innerText =
+      document.getElementById('connection-status').textContent =
         'Local Mode Active • Cloud sync unavailable';
     }
 
     render();
   }
 
-  // ==========================================
-  // TAB SWITCHING
-  // ==========================================
-
   function switchTab(tab) {
+    if (!CATEGORIES.includes(tab)) return;
+
     currentTab = tab;
 
-    ['parades', 'events', 'officials'].forEach(category => {
+    CATEGORIES.forEach(category => {
       const button = document.getElementById(`tab-${category}`);
 
-      if (category === tab) {
-        button.className =
-          'pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600 whitespace-nowrap';
-      } else {
-        button.className =
-          'pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap';
-      }
+      button.className = category === tab
+        ? 'pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600 whitespace-nowrap'
+        : 'pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent whitespace-nowrap';
     });
 
     render();
   }
-
-  // ==========================================
-  // ADD STUDENT
-  // ==========================================
 
   async function addStudent() {
-    const name = prompt('Enter Cadet Name:');
-
-    if (!name || !name.trim()) return;
-
-    const newCadet = {
-      id: Date.now().toString(),
-      name: name.trim()
-    };
-
-    students.push(newCadet);
-
-    saveLocal();
-    render();
-
-    if (db) {
-      const { error } = await db.from('cadets').insert([newCadet]);
-
-      if (error) {
-        console.error('Student cloud save failed:', error);
-        document.getElementById('connection-status').innerText =
-          'Saved locally • Cloud save failed';
-      }
-    }
-  }
-
-  // ==========================================
-  // DELETE STUDENT
-  // ==========================================
-
-  async function deleteStudent(id) {
-    if (!confirm('Are you sure you want to delete this cadet?')) {
-      return;
-    }
-
-    students = students.filter(student => String(student.id) !== String(id));
-
-    Object.keys(attendance).forEach(category => {
-      Object.keys(attendance[category]).forEach(key => {
-        if (key.startsWith(`${id}_`)) {
-          delete attendance[category][key];
-        }
-      });
-    });
-
-    saveLocal();
-    render();
-
-    if (db) {
-      const { error: cadetError } = await db
-        .from('cadets')
-        .delete()
-        .eq('id', id);
-
-      const { error: attendanceError } = await db
-        .from('attendance')
-        .delete()
-        .eq('cadet_id', id);
-
-      if (cadetError || attendanceError) {
-        console.error('Cloud deletion failed:', cadetError || attendanceError);
-      }
-    }
-  }
-
-  // ==========================================
-  // ADD DATE
-  // ==========================================
-
-  async function addDate() {
-    const labels = {
+    const label = {
       parades: 'Parade',
       events: 'Event',
       officials: 'Official Duty'
     };
 
-    const today = new Date().toLocaleDateString('en-CA');
+    const name = prompt(
+      `Enter ${label[currentTab]} Cadet Name:`
+    );
 
+    if (!name || !name.trim()) return;
+
+    const cleanName = name.trim();
+
+    const duplicate = getCurrentStudents().some(
+      student =>
+        student.name.toLowerCase() === cleanName.toLowerCase()
+    );
+
+    if (duplicate) {
+      alert('This name is already in this tab.');
+      return;
+    }
+
+    const newCadet = {
+      id: `local-${Date.now()}`,
+      name: cleanName,
+      category: currentTab
+    };
+
+    studentsByCategory[currentTab].push(newCadet);
+
+    saveLocal();
+    render();
+
+    if (db) {
+      const { error } = await db.from('cadets').insert([
+        {
+          name: cleanName,
+          category: currentTab
+        }
+      ]);
+
+      if (error) {
+        console.error('Cloud student save failed:', error);
+
+        document.getElementById('connection-status').textContent =
+          'Saved locally • Cloud save failed';
+      } else {
+        await loadDataFromCloud();
+      }
+    }
+  }
+
+  async function deleteStudent(id) {
+    if (!confirm('Delete this cadet from this tab?')) return;
+
+    studentsByCategory[currentTab] =
+      getCurrentStudents().filter(
+        student => String(student.id) !== String(id)
+      );
+
+    // Remove only this cadet's attendance from the current tab.
+    Object.keys(attendance[currentTab]).forEach(key => {
+      if (key.startsWith(`${id}_`)) {
+        delete attendance[currentTab][key];
+      }
+    });
+
+    saveLocal();
+    render();
+
+    if (db && !String(id).startsWith('local-')) {
+      const { error } = await db
+        .from('cadets')
+        .delete()
+        .eq('id', id)
+        .eq('category', currentTab);
+
+      if (error) console.error('Cloud delete failed:', error);
+
+      const { error: attendanceError } = await db
+        .from('attendance')
+        .delete()
+        .eq('cadet_id', id)
+        .eq('category', currentTab);
+
+      if (attendanceError) {
+        console.error('Cloud attendance delete failed:', attendanceError);
+      }
+    }
+  }
+
+  async function addDate() {
     const date = prompt(
-      `Enter ${labels[currentTab]} Date (YYYY-MM-DD):`,
-      today
+      'Enter date (YYYY-MM-DD):',
+      new Date().toISOString().slice(0, 10)
     );
 
     if (!date) return;
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      alert('Please enter the date in YYYY-MM-DD format.');
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+      Number.isNaN(Date.parse(date))
+    ) {
+      alert('Please enter a valid date in YYYY-MM-DD format.');
       return;
     }
 
     if (dates[currentTab].includes(date)) {
-      alert('This date already exists.');
+      alert('This date already exists in this tab.');
       return;
     }
 
@@ -448,12 +528,14 @@
     render();
 
     if (db) {
-      const { error } = await db.from('attendance').insert([{
-        name: `${currentTab}_date_${date}`,
-        category: currentTab,
-        type: 'date',
-        date_str: date
-      }]);
+      const { error } = await db.from('attendance').insert([
+        {
+          name: `${currentTab}_date_${date}`,
+          category: currentTab,
+          type: 'date',
+          date_str: date
+        }
+      ]);
 
       if (error) {
         console.error('Cloud date save failed:', error);
@@ -461,21 +543,15 @@
     }
   }
 
-  // ==========================================
-  // DELETE DATE
-  // ==========================================
-
-  async function deleteDate(dateToDelete) {
-    if (!confirm(`Delete attendance date ${dateToDelete}?`)) {
-      return;
-    }
+  async function deleteDate(date) {
+    if (!confirm(`Delete date ${date} from ${currentTab}?`)) return;
 
     dates[currentTab] = dates[currentTab].filter(
-      date => date !== dateToDelete
+      item => item !== date
     );
 
     Object.keys(attendance[currentTab]).forEach(key => {
-      if (key.endsWith(`_${dateToDelete}`)) {
+      if (key.endsWith(`_${date}`)) {
         delete attendance[currentTab][key];
       }
     });
@@ -488,35 +564,23 @@
         .from('attendance')
         .delete()
         .eq('category', currentTab)
-        .eq('date_str', dateToDelete);
+        .eq('date_str', date);
 
-      if (error) {
-        console.error('Cloud date deletion failed:', error);
-      }
+      if (error) console.error('Cloud date delete failed:', error);
     }
   }
 
-  // ==========================================
-  // MARK ATTENDANCE
-  // Click cycle: Blank -> Present -> Absent -> Blank
-  // ==========================================
-
   async function toggleAttendance(studentId, date) {
     const key = `${studentId}_${date}`;
-    const currentStatus = attendance[currentTab][key];
 
-    let nextStatus = '';
+    const current = attendance[currentTab][key];
 
-    if (!currentStatus) {
-      nextStatus = 'P';
-    } else if (currentStatus === 'P') {
-      nextStatus = 'A';
-    } else {
-      nextStatus = '';
-    }
+    // Click once for Present, again for Absent, and again to clear.
+    const next =
+      !current ? 'P' : current === 'P' ? 'A' : '';
 
-    if (nextStatus) {
-      attendance[currentTab][key] = nextStatus;
+    if (next) {
+      attendance[currentTab][key] = next;
     } else {
       delete attendance[currentTab][key];
     }
@@ -524,7 +588,7 @@
     saveLocal();
     render();
 
-    if (!db) return;
+    if (!db || String(studentId).startsWith('local-')) return;
 
     const { error: deleteError } = await db
       .from('attendance')
@@ -539,72 +603,81 @@
       return;
     }
 
-    if (nextStatus) {
-      const student = students.find(
+    if (next) {
+      const student = getCurrentStudents().find(
         item => String(item.id) === String(studentId)
       );
 
-      const { error: insertError } = await db
-        .from('attendance')
-        .insert([{
+      const { error } = await db.from('attendance').insert([
+        {
           name: `${student ? student.name : 'Cadet'}_${date}`,
           category: currentTab,
           type: 'record',
           cadet_id: studentId,
           date_str: date,
-          status: nextStatus
-        }]);
+          status: next
+        }
+      ]);
 
-      if (insertError) {
-        console.error('Cloud attendance save failed:', insertError);
+      if (error) {
+        console.error('Cloud attendance save failed:', error);
       }
     }
   }
 
-  // ==========================================
-  // CALCULATE ATTENDANCE PERCENTAGE
-  // Only marked P/A dates are counted.
-  // ==========================================
-
   function calculatePercentage(category, studentId) {
     const categoryDates = dates[category] || [];
 
-    let presentCount = 0;
-    let totalConducted = 0;
+    let present = 0;
+    let marked = 0;
 
     categoryDates.forEach(date => {
-      const key = `${studentId}_${date}`;
-      const status = attendance[category][key];
+      const status =
+        attendance[category][`${studentId}_${date}`];
 
       if (status === 'P') {
-        presentCount++;
-        totalConducted++;
+        present++;
+        marked++;
       } else if (status === 'A') {
-        totalConducted++;
+        marked++;
       }
     });
 
-    if (totalConducted === 0) return 0;
-
-    return Math.round((presentCount / totalConducted) * 100);
+    return marked
+      ? Math.round((present / marked) * 100)
+      : 0;
   }
 
-  // ==========================================
-  // CSV EXPORT
-  // ==========================================
+  function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    })[character]);
+  }
 
   function exportToCSV() {
     const rows = [
-      ['CATEGORY', 'SR NO', 'Student Name', 'Date', 'Status', 'Percentage']
+      [
+        'CATEGORY',
+        'SR NO',
+        'Student Name',
+        'Date',
+        'Status',
+        'Percentage'
+      ]
     ];
 
-    ['parades', 'events', 'officials'].forEach(category => {
-      const categoryDates = dates[category] || [];
+    CATEGORIES.forEach(category => {
+      studentsByCategory[category].forEach((student, index) => {
+        const percentage = calculatePercentage(
+          category,
+          student.id
+        );
 
-      students.forEach((student, index) => {
-        const percentage = calculatePercentage(category, student.id);
-
-        categoryDates.forEach(date => {
+        dates[category].forEach(date => {
           const status =
             attendance[category][`${student.id}_${date}`] || '-';
 
@@ -620,15 +693,16 @@
       });
     });
 
-    function escapeCSV(value) {
-      return '"' + String(value).replace(/"/g, '""') + '"';
-    }
+    const csv = rows.map(row =>
+      row.map(value =>
+        `"${String(value).replace(/"/g, '""')}"`
+      ).join(',')
+    ).join('\r\n');
 
-    const csv = rows.map(row => row.map(escapeCSV).join(',')).join('\r\n');
-
-    const blob = new Blob(['\uFEFF' + csv], {
-      type: 'text/csv;charset=utf-8;'
-    });
+    const blob = new Blob(
+      ['\uFEFF' + csv],
+      { type: 'text/csv;charset=utf-8;' }
+    );
 
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -644,37 +718,32 @@
     URL.revokeObjectURL(url);
   }
 
-  // ==========================================
-  // MONTH FILTER
-  // ==========================================
-
   function getAvailableMonths() {
-    const months = new Set();
-
-    (dates[currentTab] || []).forEach(date => {
-      months.add(date.substring(0, 7));
-    });
-
-    return Array.from(months).sort();
+    return [
+      ...new Set(
+        (dates[currentTab] || []).map(date => date.slice(0, 7))
+      )
+    ].sort();
   }
 
   function formatMonthYear(value) {
     const parts = value.split('-');
 
-    const monthNames = [
+    const names = [
       'January', 'February', 'March', 'April',
       'May', 'June', 'July', 'August',
       'September', 'October', 'November', 'December'
     ];
 
-    return `${monthNames[Number(parts[1]) - 1]} ${parts[0]}`;
+    return `${names[Number(parts[1]) - 1]} ${parts[0]}`;
   }
 
   function updateFilterDropdown() {
     const dropdown = document.getElementById('date-filter');
-    const previousValue = dropdown.value;
+    const previous = dropdown.value;
 
-    dropdown.innerHTML = '<option value="all">Show All Dates</option>';
+    dropdown.innerHTML =
+      '<option value="all">Show All Dates</option>';
 
     getAvailableMonths().forEach(month => {
       const option = document.createElement('option');
@@ -685,130 +754,119 @@
       dropdown.appendChild(option);
     });
 
-    if ([...dropdown.options].some(option => option.value === previousValue)) {
-      dropdown.value = previousValue;
-    } else {
-      dropdown.value = 'all';
-    }
+    dropdown.value = [...dropdown.options].some(
+      option => option.value === previous
+    ) ? previous : 'all';
   }
-
-  // ==========================================
-  // HTML ESCAPING
-  // ==========================================
-
-  function escapeHTML(value) {
-    return String(value ?? '').replace(/[&<>"']/g, character => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;'
-    })[character]);
-  }
-
-  // ==========================================
-  // DISPLAY TABLE
-  // ==========================================
 
   function render() {
+    const students = getCurrentStudents();
+
     updateFilterDropdown();
 
-    const selectedFilter = document.getElementById('date-filter').value;
-    const categoryDates = dates[currentTab] || [];
+    const selected =
+      document.getElementById('date-filter').value;
 
-    const filteredDates = selectedFilter === 'all'
-      ? categoryDates
-      : categoryDates.filter(date => date.startsWith(selectedFilter));
+    const allDates = dates[currentTab] || [];
+
+    const visibleDates = selected === 'all'
+      ? allDates
+      : allDates.filter(date => date.startsWith(selected));
 
     document.getElementById('filter-status').textContent =
-      selectedFilter === 'all'
-        ? `Showing all ${filteredDates.length} dates.`
-        : `Showing ${filteredDates.length} of ${categoryDates.length} dates in ${formatMonthYear(selectedFilter)}.`;
+      selected === 'all'
+        ? `Showing all ${visibleDates.length} dates.`
+        : `Showing ${visibleDates.length} of ${allDates.length} dates in ${formatMonthYear(selected)}.`;
 
-    const dateButtonLabels = {
-      parades: '+ Add Parade Date',
-      events: '+ Add Event Date',
-      officials: '+ Add Official Date'
-    };
-
-    const percentageLabels = {
-      parades: 'Parade %',
-      events: 'Event %',
-      officials: 'Official %'
+    const labels = {
+      parades: 'Parade',
+      events: 'Event',
+      officials: 'Official Duty'
     };
 
     document.getElementById('btn-add-date').textContent =
-      dateButtonLabels[currentTab];
+      `+ Add ${labels[currentTab]} Date`;
 
-    document.getElementById('header-pct-label')?.remove();
-
-    const headerRow = document.getElementById('table-header-row');
-
-    const dateHeaders = filteredDates.map(date => `
-      <th class="p-3 border-r min-w-[130px] text-center">
-        <div class="flex items-center justify-between gap-2">
-          <span>${escapeHTML(date)}</span>
-          <button
-            onclick="deleteDate('${date}')"
-            class="text-slate-400 hover:text-red-600 font-bold px-1"
-            title="Delete Date">×</button>
-        </div>
+    document.getElementById('table-header-row').innerHTML = `
+      <th class="p-3 border-r w-12 text-center sticky-header-1">
+        #
       </th>
-    `).join('');
 
-    headerRow.innerHTML = `
-      <th class="p-3 border-r w-12 text-center sticky-header-1">#</th>
-      <th class="p-3 border-r min-w-[200px] sticky-header-2">Student Name</th>
-      ${dateHeaders}
+      <th class="p-3 border-r min-w-[200px] sticky-header-2">
+        Cadet Name
+      </th>
+
+      ${visibleDates.map(date => `
+        <th class="p-3 border-r min-w-[130px] text-center">
+          <div class="flex items-center justify-between gap-2">
+            <span>${escapeHTML(date)}</span>
+
+            <button
+              onclick="deleteDate('${date}')"
+              class="text-slate-400 hover:text-red-600 font-bold px-1"
+              title="Delete date">
+              ×
+            </button>
+          </div>
+        </th>
+      `).join('')}
+
       <th class="p-3 border-l bg-slate-100 text-center w-28">
-        ${percentageLabels[currentTab]}
+        ${labels[currentTab]} %
       </th>
-      <th class="p-3 text-center w-24">Action</th>
+
+      <th class="p-3 text-center w-24">
+        Action
+      </th>
     `;
 
-    const rowsContainer = document.getElementById('student-rows');
+    const body = document.getElementById('student-rows');
 
-    if (students.length === 0) {
-      rowsContainer.innerHTML = `
+    if (!students.length) {
+      body.innerHTML = `
         <tr>
-          <td colspan="${filteredDates.length + 4}"
+          <td colspan="${visibleDates.length + 4}"
             class="text-center p-6 text-slate-400">
-            No cadets found. Click "+ Add Cadet Name" to begin.
+            No cadets in ${labels[currentTab]}.
+            Click "+ Add Cadet Name" to add one.
           </td>
         </tr>
       `;
     } else {
-      rowsContainer.innerHTML = students.map((student, index) => {
-        const percentage = calculatePercentage(currentTab, student.id);
-
-        const dateCells = filteredDates.map(date => {
+      body.innerHTML = students.map((student, index) => {
+        const cells = visibleDates.map(date => {
           const status =
             attendance[currentTab][`${student.id}_${date}`] || '';
 
-          let buttonClass =
-            'bg-slate-50 text-slate-500 hover:bg-slate-100';
+          const style = status === 'P'
+            ? 'bg-emerald-500 text-white font-bold hover:bg-emerald-600'
+            : status === 'A'
+              ? 'bg-rose-500 text-white font-bold hover:bg-rose-600'
+              : 'bg-slate-50 text-slate-500 hover:bg-slate-100';
 
-          if (status === 'P') {
-            buttonClass =
-              'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
-          } else if (status === 'A') {
-            buttonClass =
-              'bg-rose-500 text-white font-bold hover:bg-rose-600';
-          }
+          const safeId = String(student.id).replace(/'/g, "\\'");
 
           return `
             <td class="p-2 border-r text-center">
               <button
-                onclick="toggleAttendance('${String(student.id).replace(/'/g, "\\'")}', '${date}')"
-                class="w-full h-9 rounded text-xs ${buttonClass}">
+                onclick="toggleAttendance('${safeId}','${date}')"
+                class="w-full h-9 rounded text-xs ${style}">
                 ${status || '-'}
               </button>
             </td>
           `;
         }).join('');
 
+        const percentage = calculatePercentage(
+          currentTab,
+          student.id
+        );
+
+        const safeId = String(student.id).replace(/'/g, "\\'");
+
         return `
           <tr class="hover:bg-slate-50">
+
             <td class="p-3 border-r text-center sticky-col-1">
               ${index + 1}
             </td>
@@ -817,37 +875,41 @@
               ${escapeHTML(student.name)}
             </td>
 
-            ${dateCells}
+            ${cells}
 
             <td class="p-3 border-l text-center">
-              <span class="bg-slate-100 text-slate-800 font-bold px-2.5 py-1 rounded">
+              <span class="bg-slate-100 font-bold px-2.5 py-1 rounded">
                 ${percentage}%
               </span>
             </td>
 
             <td class="p-3 text-center">
               <button
-                onclick="deleteStudent('${String(student.id).replace(/'/g, "\\'")}')"
+                onclick="deleteStudent('${safeId}')"
                 class="text-rose-600 hover:text-rose-800 font-semibold text-xs">
                 Delete
               </button>
             </td>
+
           </tr>
         `;
       }).join('');
     }
 
-    // Update dashboard statistics.
-    document.getElementById('stat-cadets').textContent = students.length;
-    document.getElementById('stat-parades').textContent = dates.parades.length;
-    document.getElementById('stat-events').textContent = dates.events.length;
-    document.getElementById('stat-officials').textContent = dates.officials.length;
+    document.getElementById('stat-cadets').textContent =
+      students.length;
+
+    document.getElementById('stat-parades').textContent =
+      dates.parades.length;
+
+    document.getElementById('stat-events').textContent =
+      dates.events.length;
+
+    document.getElementById('stat-officials').textContent =
+      dates.officials.length;
   }
 
-  // ==========================================
-  // START APPLICATION
-  // ==========================================
-
+  // Start the register.
   saveLocal();
   render();
   loadDataFromCloud();
