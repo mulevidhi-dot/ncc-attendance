@@ -54,8 +54,8 @@
         <button onclick="addStudent()" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
           + Add Cadet Name
         </button>
-        <button onclick="addParadeDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
-          + Add Date
+        <button onclick="addOfficialDate()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
+          + Add Official Date
         </button>
         <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition">
           📥 Export CSV
@@ -70,20 +70,20 @@
         <p id="stat-cadets" class="text-2xl font-bold text-slate-800 mt-1">0</p>
       </div>
       <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Parades Conducted</p>
-        <p id="stat-parades" class="text-2xl font-bold text-slate-800 mt-1">0</p>
+        <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Officials Conducted</p>
+        <p id="stat-officials" class="text-2xl font-bold text-slate-800 mt-1">0</p>
       </div>
     </div>
 
-    <!-- Filter Bar (This is Option 3) -->
+    <!-- Filter Bar -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
       <div class="flex items-center gap-3">
-        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Parade Dates:</label>
+        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Official Dates:</label>
         <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
-          <option value="all">Show All Parades</option>
+          <option value="all">Show All Officials</option>
         </select>
       </div>
-      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all parades.</p>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all officials.</p>
     </div>
 
     <!-- Main Spreadsheet Table -->
@@ -146,8 +146,8 @@
       }
     }
 
-    function addParadeDate() {
-      const date = prompt("Enter Parade Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+    function addOfficialDate() {
+      const date = prompt("Enter Official Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
       if (date && !dates.includes(date)) {
         dates.push(date);
         dates.sort();
@@ -206,7 +206,7 @@
       let blob = new Blob([csv.join("\n")], { type: "text/csv" });
       let link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = `NCC_Attendance_Register_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `NCC_Official_Attendance_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
     }
 
@@ -231,7 +231,7 @@
       const currentValue = dropdown.value;
       const availableMonths = getAvailableMonths();
 
-      dropdown.innerHTML = '<option value="all">Show All Parades</option>';
+      dropdown.innerHTML = '<option value="all">Show All Officials</option>';
 
       availableMonths.forEach(ym => {
         const option = document.createElement('option');
@@ -254,11 +254,11 @@
 
       if (selectedFilter === 'all') {
         filteredDates = dates;
-        document.getElementById('filter-status').innerText = `Showing all ${dates.length} parades.`;
+        document.getElementById('filter-status').innerText = `Showing all ${dates.length} officials.`;
       } else {
         filteredDates = dates.filter(d => d.startsWith(selectedFilter));
         const monthName = formatMonthYear(selectedFilter);
-        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${dates.length} total parades in ${monthName}.`;
+        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${dates.length} total officials in ${monthName}.`;
       }
 
       const headerRow = document.getElementById('table-header-row');
@@ -316,7 +316,7 @@
       }).join('');
 
       document.getElementById('stat-cadets').innerText = students.length;
-      document.getElementById('stat-parades').innerText = dates.length;
+      document.getElementById('stat-officials').innerText = dates.length;
     }
 
     render();
