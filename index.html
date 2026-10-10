@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NCC Battalion Attendance Register</title>
+  <title>NCC Attendance Register</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -58,7 +58,7 @@
     <div class="flex flex-wrap gap-2">
       <button onclick="addStudent()"
         class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm">
-        + Add Cadet Name
+        + Add  Name
       </button>
 
       <button id="btn-add-date" onclick="addDate()"
@@ -164,10 +164,10 @@
   // Supabase settings.
   // Paste your existing public anon key below if you want cloud syncing.
   const SUPABASE_URL =
-    'https://pdniwpvobbbepipsxskt.supabase.co';
+    'sb_publishable_qBMH8I5mPVE4UypLEV6F9w_AVz0ozFK';
 
   const SUPABASE_ANON_KEY =
-    'PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE';
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkbml3cHZvYmJlcGlwc3hza3RsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE2MDM2MjYsImV4cCI6MjEwNzE3OTYyNn0.1DmX3AsoqcSXXFjIeIP06OdK1mx4R6GnX-IwTVRZ_XA';
 
   let db = null;
 
