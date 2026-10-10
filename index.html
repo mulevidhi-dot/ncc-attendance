@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NCC Battalion Attendance Register</title>
 
-  <!-- Tailwind CSS: styling loads from the internet -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -121,17 +121,14 @@
 
   <!-- Category Tabs -->
   <div class="flex flex-wrap border-b border-slate-200 bg-white rounded-t-xl px-4 pt-3 shadow-sm gap-2">
-
     <button onclick="switchTab('parades')" id="tab-parades"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-blue-600 border-blue-600 cursor-pointer">
       🛡️ Parades
     </button>
-
     <button onclick="switchTab('events')" id="tab-events"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent cursor-pointer">
       🎖️ Events
     </button>
-
     <button onclick="switchTab('officials')" id="tab-officials"
       class="pb-3 px-4 font-bold text-sm border-b-2 text-slate-500 border-transparent cursor-pointer">
       📋 Officials
@@ -237,20 +234,23 @@ function readJSON(key, fallback) {
   }
 }
 
-function makeDefaultDates() {
-  return {
-    parades: ["2026-05-19", "2026-05-26"],
-    events: ["2026-06-01"],
-    officials: ["2026-06-10"]
-  };
-}
-
-function makeDefaultAttendance() {
-  return {
-    parades: { "1_2026-05-19": "P", "2_2026-05-19": "P" },
-    events: { "1_2026-06-01": "P" },
-    officials: { "1_2026-06-10": "P" }
-  };
+function normalizeStudents(value) {
+  const result = {};
+  CATEGORIES.forEach(category => {
+    if (value && Array.isArray(value[category])) {
+      result[category] = value[category]
+        .filter(s => s && s.id !== undefined && typeof s.name === "string")
+        .map(s => ({ id: String(s.id), name: s.name }));
+    } else {
+      // Default fallback per category if migrating old flat data
+      result[category] = [
+        { id: "1", name: "Ansh" },
+        { id: "2", name: "Pawan" },
+        { id: "3", name: "Pranav" }
+      ];
+    }
+  });
+  return result;
 }
 
 function normalizeDates(value) {
@@ -268,7 +268,6 @@ function normalizeAttendance(value) {
   CATEGORIES.forEach(category => {
     result[category] = {};
     const records = value?.[category];
-
     if (records && typeof records === "object" && !Array.isArray(records)) {
       Object.entries(records).forEach(([key, status]) => {
         if (status === "P" || status === "A") {
@@ -280,38 +279,17 @@ function normalizeAttendance(value) {
   return result;
 }
 
-function normalizeWeights(value, dateData) {
-  const result = {};
-  CATEGORIES.forEach(category => {
-    result[category] = {};
-    dateData[category].forEach(date => {
-      const weight = Number(value?.[category]?.[date]);
-      result[category][date] = Number.isFinite(weight) && weight > 0 ? weight : 1;
-    });
-  });
-  return result;
-}
-
-let students = readJSON("ncc_students", [
-  { id: "1", name: "Ansh" },
-  { id: "2", name: "Pawan" },
-  { id: "3", name: "Pranav" }
-]);
-
-if (!Array.isArray(students)) students = [];
-
-students = students
-  .filter(s => s && s.id !== undefined && typeof s.name === "string")
-  .map(s => ({ id: String(s.id), name: s.name }));
-
-let dates = normalizeDates(readJSON("ncc_dates", makeDefaultDates()));
-let attendance = normalizeAttendance(readJSON("ncc_attendance", makeDefaultAttendance()));
-let weights = normalizeWeights(readJSON("ncc_weights", {}), dates);
-
-CATEGORIES.forEach(category => {
-  if (!attendance[category]) attendance[category] = {};
-  if (!weights[category]) weights[category] = {};
-});
+let students = normalizeStudents(readJSON("ncc_students", null));
+let dates = normalizeDates(readJSON("ncc_dates", {
+  parades: ["2026-05-19", "2026-05-26"],
+  events: ["2026-06-01"],
+  officials: ["2026-06-10"]
+}));
+let attendance = normalizeAttendance(readJSON("ncc_attendance", {
+  parades: { "1_2026-05-19": "P", "2_2026-05-19": "P" },
+  events: { "1_2026-06-01": "P" },
+  officials: { "1_2026-06-10": "P" }
+}));
 
 function isValidDate(value) {
   if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}\$/.test(value)) return false;
@@ -324,7 +302,6 @@ function saveData() {
     localStorage.setItem("ncc_students", JSON.stringify(students));
     localStorage.setItem("ncc_dates", JSON.stringify(dates));
     localStorage.setItem("ncc_attendance", JSON.stringify(attendance));
-    localStorage.setItem("ncc_weights", JSON.stringify(weights));
     render();
   } catch (error) {
     alert("Could not save data. Your browser storage may be full.");
@@ -349,10 +326,10 @@ function switchTab(tab) {
 }
 
 function addStudent() {
-  const name = prompt("Enter Cadet Name:");
+  const name = prompt("Enter Cadet Name for " + currentTab.charAt(0).toUpperCase() + currentTab.slice(1) + ":");
   if (name === null || !name.trim()) return;
 
-  students.push({
+  students[currentTab].push({
     id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
     name: name.trim()
   });
@@ -361,19 +338,17 @@ function addStudent() {
 }
 
 function deleteStudent(id) {
-  const student = students.find(s => s.id === id);
+  const student = students[currentTab].find(s => s.id === id);
   if (!student) return;
 
-  if (!confirm("Delete " + student.name + " and all their attendance records?")) return;
+  if (!confirm("Delete " + student.name + " from " + currentTab + "?")) return;
 
-  students = students.filter(s => s.id !== id);
+  students[currentTab] = students[currentTab].filter(s => s.id !== id);
 
-  CATEGORIES.forEach(category => {
-    Object.keys(attendance[category]).forEach(key => {
-      if (key.startsWith(id + "_")) {
-        delete attendance[category][key];
-      }
-    });
+  Object.keys(attendance[currentTab]).forEach(key => {
+    if (key.startsWith(id + "_")) {
+      delete attendance[currentTab][key];
+    }
   });
 
   saveData();
@@ -403,7 +378,6 @@ function addDate() {
 
   dates[currentTab].push(date);
   dates[currentTab].sort();
-  weights[currentTab][date] = 1;
 
   saveData();
 }
@@ -412,7 +386,6 @@ function deleteDate(dateToDelete) {
   if (!confirm("Delete the date " + dateToDelete + " in this category?")) return;
 
   dates[currentTab] = dates[currentTab].filter(d => d !== dateToDelete);
-  delete weights[currentTab][dateToDelete];
 
   Object.keys(attendance[currentTab]).forEach(key => {
     if (key.endsWith("_" + dateToDelete)) {
@@ -439,38 +412,38 @@ function toggleAttendance(studentId, date) {
 }
 
 function calculatePercentage(category, studentId) {
-  let presentWeight = 0;
-  let markedWeight = 0;
+  const catDates = dates[category] || [];
+  if (catDates.length === 0) return null;
 
-  dates[category].forEach(date => {
-    const status = attendance[category][studentId + "_" + date];
-    if (status !== "P" && status !== "A") return;
+  let presentCount = 0;
+  let totalConducted = 0;
 
-    const weight = Number(weights[category][date]) || 1;
-    markedWeight += weight;
-
-    if (status === "P") {
-      presentWeight += weight;
-    }
+  catDates.forEach(d => {
+    const val = attendance[category][studentId + "_" + d];
+    if (val === 'P') presentCount++;
+    if (val === 'P' || val === 'A') totalConducted++;
   });
 
-  if (markedWeight === 0) return null;
-  return Math.round((presentWeight / markedWeight) * 100);
+  if (totalConducted === 0) return null;
+  return Math.round((presentCount / totalConducted) * 100);
 }
 
 function exportToCSV() {
   const rows = [["Category", "Sr No", "Cadet Name", "Date", "Status", "Percentage"]];
 
   CATEGORIES.forEach(category => {
-    students.forEach((student, index) => {
+    const catStudents = students[category] || [];
+    const catDates = dates[category] || [];
+
+    catStudents.forEach((student, index) => {
       const percentage = calculatePercentage(category, student.id);
       const percentageText = percentage === null ? "Not marked" : percentage + "%";
 
-      if (dates[category].length === 0) {
+      if (catDates.length === 0) {
         rows.push([category.toUpperCase(), index + 1, student.name, "", "No dates", percentageText]);
       }
 
-      dates[category].forEach(date => {
+      catDates.forEach(date => {
         const status = attendance[category][student.id + "_" + date] || "Not marked";
         rows.push([category.toUpperCase(), index + 1, student.name, date, status, percentageText]);
       });
@@ -524,6 +497,7 @@ function render() {
 
   const selectedFilter = document.getElementById("date-filter").value;
   const categoryDates = dates[currentTab];
+  const catStudents = students[currentTab] || [];
 
   const filteredDates = selectedFilter === "all"
     ? categoryDates
@@ -588,7 +562,7 @@ function render() {
   const rowsContainer = document.getElementById("student-rows");
   rowsContainer.innerHTML = "";
 
-  students.forEach((student, index) => {
+  catStudents.forEach((student, index) => {
     const row = document.createElement("tr");
     row.className = "hover:bg-slate-50 transition";
 
@@ -651,7 +625,7 @@ function render() {
     rowsContainer.appendChild(row);
   });
 
-  document.getElementById("stat-cadets").textContent = students.length;
+  document.getElementById("stat-cadets").textContent = catStudents.length;
   document.getElementById("stat-parades").textContent = dates.parades.length;
   document.getElementById("stat-events").textContent = dates.events.length;
   document.getElementById("stat-officials").textContent = dates.officials.length;
