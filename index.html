@@ -75,7 +75,18 @@
       </div>
     </div>
 
-    <!-- Main Spreadsheet Table with Horizontal Scroll -->
+    <!-- Filter Bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <label for="date-filter" class="text-sm font-medium text-slate-600">Filter Parade Dates:</label>
+        <select id="date-filter" onchange="render()" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-200">
+          <option value="all">Show All Parades</option>
+        </select>
+      </div>
+      <p id="filter-status" class="text-sm text-slate-500 italic">Showing all parades.</p>
+    </div>
+
+    <!-- Main Spreadsheet Table with Sticky Frozen Columns -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
       <div class="overflow-x-auto max-w-full">
         <table class="w-full text-left border-collapse min-w-max">
@@ -83,7 +94,7 @@
             <tr id="table-header-row" class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-600">
               <th class="p-3 border-r border-slate-200 w-12 text-center sticky-header-1">#</th>
               <th class="p-3 border-r border-slate-200 min-w-[200px] sticky-header-2">Student Name</th>
-              <!-- Dynamic Date Columns will be inserted here -->
+              <!-- Dynamic Date Columns inserted here -->
               <th class="p-3 border-l border-slate-200 bg-slate-100 text-center w-28">Total %</th>
               <th class="p-3 text-center w-20">Action</th>
             </tr>
@@ -105,6 +116,8 @@
     ];
 
     let dates = JSON.parse(localStorage.getItem('ncc_dates')) || ['2026-05-19', '2026-05-26', '2026-06-02'];
+    dates.sort();
+
     let attendance = JSON.parse(localStorage.getItem('ncc_attendance')) || {
       '1_2026-05-19': 'P', '1_2026-05-26': 'P', '1_2026-06-02': 'P',
       '2_2026-05-19': 'P', '2_2026-05-26': 'A', '2_2026-06-02': 'P',
@@ -197,10 +210,57 @@
       link.click();
     }
 
+    function getAvailableMonths() {
+      const months = new Set();
+      dates.forEach(d => {
+        months.add(d.substring(0, 7)); // YYYY-MM
+      });
+      return Array.from(months).sort();
+    }
+
+    function formatMonthYear(ymString) {
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      const parts = ymString.split('-');
+      return `${months[parseInt(parts[1]) - 1]} ${parts[0]}`;
+    }
+
+    function updateFilterDropdown() {
+      const dropdown = document.getElementById('date-filter');
+      const currentValue = dropdown.value;
+      const availableMonths = getAvailableMonths();
+
+      dropdown.innerHTML = '<option value="all">Show All Parades</option>';
+
+      availableMonths.forEach(ym => {
+        const option = document.createElement('option');
+        option.value = ym;
+        option.innerText = formatMonthYear(ym);
+        dropdown.appendChild(option);
+      });
+
+      if (currentValue && [...dropdown.options].some(o => o.value === currentValue)) {
+        dropdown.value = currentValue;
+      }
+    }
+
     function render() {
+      updateFilterDropdown();
+
+      const selectedFilter = document.getElementById('date-filter').value;
+      let filteredDates = [];
+
+      if (selectedFilter === 'all') {
+        filteredDates = dates;
+        document.getElementById('filter-status').innerText = `Showing all ${dates.length} parades.`;
+      } else {
+        filteredDates = dates.filter(d => d.startsWith(selectedFilter));
+        const monthName = formatMonthYear(selectedFilter);
+        document.getElementById('filter-status').innerText = `Showing ${filteredDates.length} of ${dates.length} total parades in ${monthName}.`;
+      }
+
       const headerRow = document.getElementById('table-header-row');
       
-      let dateHeadersHTML = dates.map(d => `
+      let dateHeadersHTML = filteredDates.map(d => `
         <th class="p-3 border-r border-slate-200 min-w-[130px] text-center">
           <div class="flex items-center justify-between gap-2">
             <span>${d}</span>
@@ -222,7 +282,7 @@
       rowsContainer.innerHTML = students.map((student, index) => {
         const pct = calculatePercentage(student.id);
 
-        const dateCells = dates.map(d => {
+        const dateCells = filteredDates.map(d => {
           const status = attendance[`${student.id}_${d}`] || '';
           let bgClass = 'bg-slate-50 text-slate-400 hover:bg-slate-100';
           if (status === 'P') bgClass = 'bg-emerald-500 text-white font-bold hover:bg-emerald-600';
